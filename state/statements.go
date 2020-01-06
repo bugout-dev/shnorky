@@ -1,6 +1,6 @@
 package state
 
-var createTables string = `
+var createTables = `
 CREATE TABLE components (
 	id VARCHAR(36) PRIMARY KEY NOT NULL,
 	component_type VARCHAR(32) NOT NULL,

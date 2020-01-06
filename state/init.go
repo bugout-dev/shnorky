@@ -6,17 +6,18 @@ import (
 	"os"
 	"path"
 
+	// sqlite3 driver registered under database/sql on import
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/simiotics/simplex/utils"
 )
 
 // DBFileName - Name of SQLite database representing state in the state directory
-var DBFileName string = "state.sqlite"
+var DBFileName = "state.sqlite"
 
 // ErrStateDirectoryAlreadyExists - Error returned by Init if a filesystem object already exists at
 // the desired state directory path
-var ErrStateDirectoryAlreadyExists error = errors.New("The given state directory already exists")
+var ErrStateDirectoryAlreadyExists = errors.New("The given state directory already exists")
 
 // Init initializes a fresh state directory at the given path.
 // If an object already exists at the given path on the filesystem, or if Init encounters any

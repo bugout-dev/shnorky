@@ -14,7 +14,7 @@ func main() {
 
 	simplexCommand := &cobra.Command{
 		Use:              "simplex",
-		Short:            "Single-node data processing with docker",
+		Short:            "Single-node data processing flows using docker",
 		Long:             "simplex lets you define data processing flows and then execute them using docker. It runs on a single machine.",
 		TraverseChildren: true,
 	}
