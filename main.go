@@ -11,6 +11,9 @@ import (
 	"github.com/simiotics/simplex/state"
 )
 
+// Version denotes the current version of the simplex tool and library
+var Version = "0.1.0-dev"
+
 func main() {
 	defaultStateDir := ".simplex"
 	currentUser, err := user.Current()
@@ -24,12 +27,20 @@ func main() {
 
 	var stateDir string
 
-	// simplex root command
 	simplexCommand := &cobra.Command{
 		Use:              "simplex",
 		Short:            "Single-node data processing flows using docker",
 		Long:             "simplex lets you define data processing flows and then execute them using docker. It runs on a single machine.",
 		TraverseChildren: true,
+	}
+
+	// simplex version
+	versionCommand := &cobra.Command{
+		Use:   "version",
+		Short: "simplex version number",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println(Version)
+		},
 	}
 
 	// simplex completion
@@ -70,7 +81,7 @@ If you are using bash and want command completion for the simplex CLI, run (ommi
 
 	stateCommand.AddCommand(initCommand)
 
-	simplexCommand.AddCommand(completionCommand, stateCommand)
+	simplexCommand.AddCommand(versionCommand, completionCommand, stateCommand)
 	simplexCommand.Flags().StringVar(&stateDir, "statedir", defaultStateDir, "Path to simplex state directory")
 
 	err = simplexCommand.Execute()
