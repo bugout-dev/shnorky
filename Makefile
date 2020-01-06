@@ -1,5 +1,8 @@
 build: simplex
 
+test:
+	go test ./... -v
+
 clean:
 	touch simplex
 	rm simplex
@@ -7,4 +10,4 @@ clean:
 simplex:
 	CGO_ENABLED=1 go build .
 
-.PHONY: build clean
+.PHONY: build test clean
