@@ -17,9 +17,6 @@ func main() {
 		Short:            "Single-node data processing with docker",
 		Long:             "simplex lets you define data processing flows and then execute them using docker. It runs on a single machine.",
 		TraverseChildren: true,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Hello")
-		},
 	}
 
 	var stateCommand = &cobra.Command{
