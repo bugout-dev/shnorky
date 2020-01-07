@@ -56,11 +56,11 @@ func TestInit(t *testing.T) {
 	}
 
 	expectedTables := map[string][]string{
-		"components":      []string{"id", "component_type", "component_path", "specification_path", "created_at"},
-		"flows":           []string{"id", "specification_path", "created_at"},
-		"flow_components": []string{"flow_id", "component_id", "created_at"},
-		"builds":          []string{"id", "component_id", "created_at"},
-		"executions":      []string{"id", "execution_type", "target_id", "created_at"},
+		"components":      {"id", "component_type", "component_path", "specification_path", "created_at"},
+		"flows":           {"id", "specification_path", "created_at"},
+		"flow_components": {"flow_id", "component_id", "created_at"},
+		"builds":          {"id", "component_id", "created_at"},
+		"executions":      {"id", "execution_type", "target_id", "created_at"},
 	}
 	for table, expectedColumns := range expectedTables {
 		selection := fmt.Sprintf("SELECT * FROM %s;", table)

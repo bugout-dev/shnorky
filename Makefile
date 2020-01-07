@@ -1,7 +1,10 @@
 build: simplex
 
+format:
+	gofmt -s -w .
+
 test:
-	go test ./... -v
+	go test ./...
 
 clean:
 	touch simplex
@@ -10,4 +13,4 @@ clean:
 simplex:
 	CGO_ENABLED=1 go build .
 
-.PHONY: build test clean
+.PHONY: build test format clean
