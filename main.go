@@ -8,6 +8,7 @@ import (
 	"os/user"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -189,7 +190,44 @@ remove unwanted components from your simplex state).
 
 	addComponentCommand.Flags().StringVarP(&specificationPath, "spec", "s", "", "Path to component specification")
 
-	componentsCommand.AddCommand(addComponentCommand)
+	listComponentsCommand := &cobra.Command{
+		Use:   "list",
+		Short: "List all components registered against the state database",
+		Long:  "Lists all components that have previously been added to the state database",
+		Run: func(cmd *cobra.Command, args []string) {
+			var wg sync.WaitGroup
+			componentsChan := make(chan components.ComponentMetadata)
+			db := openStateDB(stateDir)
+			defer db.Close()
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for {
+					component, ok := <-componentsChan
+					if !ok {
+						return
+					}
+					marshalledComponent, err := json.Marshal(component)
+					if err != nil {
+						log.WithField("component", component).WithField("error", err).Error("Error marshalling component")
+					} else {
+						fmt.Println(string(marshalledComponent))
+					}
+				}
+			}()
+
+			err := components.ListComponents(db, componentsChan)
+			if err != nil {
+				log.WithField("error", err).Fatal("Could not list components")
+			}
+			wg.Wait()
+
+			log.Info("ListComponents done")
+		},
+	}
+
+	componentsCommand.AddCommand(addComponentCommand, listComponentsCommand)
 
 	simplexCommand.AddCommand(versionCommand, completionCommand, stateCommand, componentsCommand)
 

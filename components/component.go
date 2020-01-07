@@ -95,3 +95,34 @@ func AddComponent(db *sql.DB, id, componentType, componentPath, specificationPat
 
 	return metadata, err
 }
+
+// ListComponents streams components one by one from the given state database into the given
+// components channel. This function closes the components channel when it is finished.
+func ListComponents(db *sql.DB, components chan<- ComponentMetadata) error {
+	rows, err := db.Query(selectComponents)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var id, componentType, componentPath, specificationPath string
+	var createdAt int64
+
+	for rows.Next() {
+		err = rows.Scan(&id, &componentType, &componentPath, &specificationPath, &createdAt)
+		if err != nil {
+			return err
+		}
+
+		components <- ComponentMetadata{
+			ID:                id,
+			ComponentType:     componentType,
+			ComponentPath:     componentPath,
+			SpecificationPath: specificationPath,
+			CreatedAt:         time.Unix(createdAt, 0),
+		}
+	}
+
+	close(components)
+	return nil
+}
