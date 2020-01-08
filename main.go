@@ -35,7 +35,7 @@ func generateLogger() *logrus.Logger {
 
 	rawLevel := os.Getenv("LOG_LEVEL")
 	if rawLevel == "" {
-		rawLevel = "ERROR"
+		rawLevel = "WARN"
 	}
 	level, ok := logLevels[rawLevel]
 	if !ok {
@@ -204,15 +204,14 @@ remove unwanted components from your simplex state).
 			go func() {
 				defer wg.Done()
 				for {
+					enc := json.NewEncoder(os.Stdout)
 					component, ok := <-componentsChan
 					if !ok {
 						return
 					}
-					marshalledComponent, err := json.Marshal(component)
+					err := enc.Encode(component)
 					if err != nil {
 						log.WithField("component", component).WithField("error", err).Error("Error marshalling component")
-					} else {
-						fmt.Println(string(marshalledComponent))
 					}
 				}
 			}()
