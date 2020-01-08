@@ -3,6 +3,7 @@ package components
 import (
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -11,7 +12,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/simiotics/simplex/state"
-	"github.com/simiotics/simplex/utils"
 )
 
 // TestInsertComponent tests that component insertion works as expected
@@ -22,10 +22,11 @@ func TestInsertComponent(t *testing.T) {
 		inSelection      bool
 	}
 
-	stateDir, err := utils.TempDir("", "simplex-insert-component-tests-", true)
+	stateDir, err := ioutil.TempDir("", "simplex-insert-component-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}
+	os.RemoveAll(stateDir)
 
 	err = state.Init(stateDir)
 	if err != nil {
@@ -131,16 +132,17 @@ func TestInsertComponent(t *testing.T) {
 // TestSelectComponentByID first runs InsertComponent a number of times to load a temporary state
 // database with some components. Then it tests various SelectComponentByID scenarios.
 func TestSelectComponentByID(t *testing.T) {
-	stateDir, err := utils.TempDir("", "simplex-select-component-by-id-tests-", true)
+	stateDir, err := ioutil.TempDir("", "simplex-select-component-by-id-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}
-	defer os.RemoveAll(stateDir)
+	os.RemoveAll(stateDir)
 
 	err = state.Init(stateDir)
 	if err != nil {
 		t.Fatalf("Error creating state directory: %s", err.Error())
 	}
+	defer os.RemoveAll(stateDir)
 
 	stateDBPath := path.Join(stateDir, state.DBFileName)
 	db, err := sql.Open("sqlite3", stateDBPath)
@@ -215,16 +217,17 @@ func TestSelectComponentByID(t *testing.T) {
 // TestDeleteComponentByID first runs InsertComponent a number of times to load a temporary state
 // database with some components. Then it tests various DeleteComponentByID scenarios.
 func TestDeleteComponentByID(t *testing.T) {
-	stateDir, err := utils.TempDir("", "simplex-delete-component-by-id-tests-", true)
+	stateDir, err := ioutil.TempDir("", "simplex-delete-component-by-id-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}
-	defer os.RemoveAll(stateDir)
+	os.RemoveAll(stateDir)
 
 	err = state.Init(stateDir)
 	if err != nil {
 		t.Fatalf("Error creating state directory: %s", err.Error())
 	}
+	defer os.RemoveAll(stateDir)
 
 	stateDBPath := path.Join(stateDir, state.DBFileName)
 	db, err := sql.Open("sqlite3", stateDBPath)
