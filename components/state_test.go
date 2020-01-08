@@ -128,10 +128,10 @@ func TestInsertComponent(t *testing.T) {
 	}
 }
 
-// TestGetComponentByID first runs InsertComponent a number of times to load a temporary state
-// database with some components. Then it tests various GetComponentByID scenarios.
-func TestGetComponentByID(t *testing.T) {
-	stateDir, err := utils.TempDir("", "simplex-get-component-by-id-tests-", true)
+// TestSelectComponentByID first runs InsertComponent a number of times to load a temporary state
+// database with some components. Then it tests various SelectComponentByID scenarios.
+func TestSelectComponentByID(t *testing.T) {
+	stateDir, err := utils.TempDir("", "simplex-select-component-by-id-tests-", true)
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}
@@ -169,7 +169,7 @@ func TestGetComponentByID(t *testing.T) {
 	}
 
 	for i = 0; i < 10; i++ {
-		stateComponent, err := GetComponentByID(db, components[i].ID)
+		stateComponent, err := SelectComponentByID(db, components[i].ID)
 		if err != nil {
 			t.Errorf("[Test %d] Received error when trying to get inserted component: %s", i, err.Error())
 		}
@@ -191,7 +191,7 @@ func TestGetComponentByID(t *testing.T) {
 		}
 	}
 
-	stateComponent, err := GetComponentByID(db, "nonexistent-id")
+	stateComponent, err := SelectComponentByID(db, "nonexistent-id")
 	if err != ErrComponentNotFound {
 		t.Error("[Test 11] Was expecting error ErrComponentNotFound for GetComponentByID on unregistered ID, but did not get it")
 	}
@@ -209,5 +209,81 @@ func TestGetComponentByID(t *testing.T) {
 	}
 	if !stateComponent.CreatedAt.IsZero() {
 		t.Errorf("[Test 11] GetComponentByID on unregistered ID returned non-zero CreatedAt: %v", stateComponent.CreatedAt)
+	}
+}
+
+// TestDeleteComponentByID first runs InsertComponent a number of times to load a temporary state
+// database with some components. Then it tests various DeleteComponentByID scenarios.
+func TestDeleteComponentByID(t *testing.T) {
+	stateDir, err := utils.TempDir("", "simplex-delete-component-by-id-tests-", true)
+	if err != nil {
+		t.Fatalf("Could not create temporary directory: %s", err.Error())
+	}
+	defer os.RemoveAll(stateDir)
+
+	err = state.Init(stateDir)
+	if err != nil {
+		t.Fatalf("Error creating state directory: %s", err.Error())
+	}
+
+	stateDBPath := path.Join(stateDir, state.DBFileName)
+	db, err := sql.Open("sqlite3", stateDBPath)
+	if err != nil {
+		t.Fatal("Error opening state database file")
+	}
+	defer db.Close()
+
+	var i int
+	components := make([]ComponentMetadata, 10)
+	for i = 0; i < 10; i++ {
+		component, err := GenerateComponentMetadata(
+			fmt.Sprintf("component-%d", i),
+			Task,
+			fmt.Sprintf("component-%d-dir", i),
+			fmt.Sprintf("component-%d.json", i),
+		)
+		if err != nil {
+			t.Fatalf("[Component %d] Error creating component metadata: %s", i, err.Error())
+		}
+		components[i] = component
+		err = InsertComponent(db, component)
+		if err != nil {
+			t.Fatalf("[Component %d] Error inserting component into state database: %s", i, err.Error())
+		}
+	}
+
+	err = DeleteComponentByID(db, components[0].ID)
+	if err != nil {
+		t.Fatalf("[Test 0] Could not delete component: %s", err.Error())
+	}
+
+	rows, err := db.Query(selectComponents)
+	if err != nil {
+		t.Fatalf("Could not select rows from components table: %s", err.Error())
+	}
+	defer rows.Close()
+	for i = 1; i < 10; i++ {
+		ok := rows.Next()
+		if !ok {
+			t.Fatal("Not enough rows in components selection")
+		}
+		var id, componentType, componentPath, specificationPath string
+		var createdAt int64
+		err = rows.Scan(&id, &componentType, &componentPath, &specificationPath, &createdAt)
+		if err != nil {
+			t.Errorf("[Test %d] Could not parse row from components selection: %s", i, err.Error())
+		}
+		if id != components[i].ID {
+			t.Errorf("[Test %d] Unexpected ID from current row in selection: expected=%s, actual=%s", i, components[i].ID, id)
+		}
+	}
+	ok := rows.Next()
+	if ok {
+		t.Fatal("Too many rows in components selection")
+	}
+
+	err = DeleteComponentByID(db, "nonexistent-component-id")
+	if err != nil {
+		t.Fatal("DeleteComponentByID should not error out when asked to delete a row with a non-existent ID")
 	}
 }

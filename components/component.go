@@ -126,3 +126,12 @@ func ListComponents(db *sql.DB, components chan<- ComponentMetadata) error {
 	close(components)
 	return nil
 }
+
+// RemoveComponent removes the component with the given id from the given state database
+func RemoveComponent(db *sql.DB, id string) error {
+	// TODO(nkashy1): Right now, this is simply calling DeleteComponentByID, but it should be doing
+	// a whole lot more once the build and flow story is better defined - it should also remove
+	// builds associated with the given component and should error out if there are any flows that
+	// make use of the specified component, for example.
+	return DeleteComponentByID(db, id)
+}

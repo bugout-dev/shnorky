@@ -227,7 +227,25 @@ remove unwanted components from your simplex state).
 		},
 	}
 
-	componentsCommand.AddCommand(addComponentCommand, listComponentsCommand)
+	removeComponentCommand := &cobra.Command{
+		Use:   "remove",
+		Short: "Remove a component from simplex",
+		Long:  "Removes a component registered against simplex from the state database",
+		Run: func(cmd *cobra.Command, args []string) {
+			db := openStateDB(stateDir)
+			defer db.Close()
+			err := components.RemoveComponent(db, id)
+			if err != nil {
+				log.WithField("error", err).Errorf("Error removing component: %s", err.Error())
+			}
+			fmt.Println(id)
+			log.Info("RemoveComponent done")
+		},
+	}
+
+	removeComponentCommand.Flags().StringVarP(&id, "id", "i", "", "ID for the component being removed")
+
+	componentsCommand.AddCommand(addComponentCommand, listComponentsCommand, removeComponentCommand)
 
 	simplexCommand.AddCommand(versionCommand, completionCommand, stateCommand, componentsCommand)
 

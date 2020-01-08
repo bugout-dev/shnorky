@@ -38,9 +38,9 @@ func InsertComponent(db *sql.DB, component ComponentMetadata) error {
 	return nil
 }
 
-// GetComponentByID gets component metadata from the given state database using the given ID.
+// SelectComponentByID gets component metadata from the given state database using the given ID.
 // If no component with the given ID is found, returns ErrComponentNotFound in the error position.
-func GetComponentByID(db *sql.DB, id string) (ComponentMetadata, error) {
+func SelectComponentByID(db *sql.DB, id string) (ComponentMetadata, error) {
 	var rowID, componentType, componentPath, specificationPath string
 	var createdAt int64
 	row := db.QueryRow(selectComponentByID, id)
@@ -55,4 +55,24 @@ func GetComponentByID(db *sql.DB, id string) (ComponentMetadata, error) {
 		return ComponentMetadata{}, fmt.Errorf("Result had unexpected row ID: expected=%s, actual=%s", id, rowID)
 	}
 	return ComponentMetadata{ID: rowID, ComponentType: componentType, ComponentPath: componentPath, SpecificationPath: specificationPath, CreatedAt: time.Unix(createdAt, 0)}, nil
+}
+
+// DeleteComponentByID creates a new row in the components table with the given component information.
+func DeleteComponentByID(db *sql.DB, id string) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(deleteComponentByID, id)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
