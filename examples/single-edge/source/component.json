@@ -1,0 +1,13 @@
+{
+    "build": {
+        "context": ".",
+        "Dockerfile": "Dockerfile"
+    },
+    "run": {
+        "env": {
+            "NUM_SAMPLES": 100
+        },
+        "cmd": [],
+        "mountpoints": []
+    }
+}

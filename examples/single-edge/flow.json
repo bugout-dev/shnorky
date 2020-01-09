@@ -1,0 +1,10 @@
+{
+    "source": {
+        "component": "single-edge/source",
+        "dependencies": []
+    },
+    "target": {
+        "component": "single-edge/target",
+        "dependencies": ["source"]
+    }
+}
