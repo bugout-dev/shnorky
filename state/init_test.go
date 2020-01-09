@@ -60,7 +60,7 @@ func TestInit(t *testing.T) {
 		"flows":           {"id", "specification_path", "created_at"},
 		"flow_components": {"flow_id", "component_id", "created_at"},
 		"builds":          {"id", "component_id", "created_at"},
-		"executions":      {"id", "execution_type", "target_id", "created_at"},
+		"executions":      {"id", "build_id", "component_id", "created_at", "flow_id"},
 	}
 	for table, expectedColumns := range expectedTables {
 		selection := fmt.Sprintf("SELECT * FROM %s;", table)

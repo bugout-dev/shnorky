@@ -29,8 +29,9 @@ CREATE TABLE builds (
 
 CREATE TABLE executions (
 	id VARCHAR(36) PRIMARY KEY NOT NULL,
-	execution_type CHAR(1) NOT NULL,
-	target_id VARCHAR(36) NOT NULL,
-	created_at INTEGER NOT NULL
+	build_id VARCHAR(36) NOT NULL,
+	component_id VARCHAR(36) NOT NULL,
+	created_at INTEGER NOT NULL,
+	flow_id VARCHAR(36)
 );
 `

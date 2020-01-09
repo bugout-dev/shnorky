@@ -280,9 +280,9 @@ derives from a component.
 
 			ctx := context.Background()
 
-			_, err := builds.CreateBuild(ctx, db, os.Stdout, dockerClient, id)
+			_, err := builds.CreateBuild(ctx, db, dockerClient, os.Stdout, id)
 			if err != nil {
-				log.WithField("error", err).Fatal("WTF")
+				log.WithField("error", err).Fatal("Could not create build")
 			}
 		},
 	}
@@ -329,7 +329,30 @@ derives from a component.
 
 	listBuildsCommand.Flags().StringVarP(&id, "component", "c", "", "ID of the component for which builds are being created (optional; if not set, lists all builds)")
 
-	buildsCommand.AddCommand(createBuildCommand, listBuildsCommand)
+	executeBuildCommand := &cobra.Command{
+		Use:   "execute",
+		Short: "Execute a build for a specific component",
+		Long:  "Creates a container for the given build and registers the container in the state database",
+		Run: func(cmd *cobra.Command, args []string) {
+			db := openStateDB(stateDir)
+			defer db.Close()
+
+			dockerClient := generateDockerClient()
+
+			ctx := context.Background()
+
+			executionMetadata, err := builds.ExecuteBuild(ctx, db, dockerClient, id, "")
+			if err != nil {
+				log.WithField("error", err).Fatal("Could not execute build")
+			}
+
+			fmt.Println(executionMetadata)
+		},
+	}
+
+	executeBuildCommand.Flags().StringVarP(&id, "build", "b", "", "ID of the build being executed")
+
+	buildsCommand.AddCommand(createBuildCommand, listBuildsCommand, executeBuildCommand)
 
 	simplexCommand.AddCommand(versionCommand, completionCommand, stateCommand, componentsCommand, buildsCommand)
 

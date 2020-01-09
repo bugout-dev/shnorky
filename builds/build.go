@@ -22,8 +22,8 @@ import (
 // DockerImagePrefix is the prefix that simplex attaches to each docker image name
 var DockerImagePrefix = "simplex/"
 
-// ErrEmptyComponentID signifies that a caller attempted to create component metadata in which the
-// ComponentID string was the empty string
+// ErrEmptyComponentID signifies that a caller attempted to create build or execution metadata in
+// which the ComponentID string was the empty string
 var ErrEmptyComponentID = errors.New("ComponentID must be a non-empty string")
 
 // BuildMetadata - the metadata about a component build that gets stored in the state database
@@ -45,7 +45,7 @@ func GenerateBuildMetadata(componentID string) (BuildMetadata, error) {
 }
 
 // CreateBuild creates a new build for the component with the given componentID
-func CreateBuild(ctx context.Context, db *sql.DB, outstream io.Writer, dockerClient *docker.Client, componentID string) (BuildMetadata, error) {
+func CreateBuild(ctx context.Context, db *sql.DB, dockerClient *docker.Client, outstream io.Writer, componentID string) (BuildMetadata, error) {
 	componentMetadata, err := components.SelectComponentByID(db, componentID)
 	if err != nil {
 		return BuildMetadata{}, err
