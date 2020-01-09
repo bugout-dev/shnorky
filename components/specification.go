@@ -16,11 +16,12 @@ type ComponentSpecification struct {
 // be built; all paths are assumed to be paths relative to the component path (i.e. the directory
 // containing the implementation of the component)
 type BuildSpecification struct {
-	// Path to Dockerfile to be used to build the component
-	Dockerfile string `json:"Dockerfile"`
-
-	// Context that should be provided at build time
+	// Path to context directory (used to build docker image)
 	Context string `json:"context"`
+
+	// Path to Dockerfile to be used to build the component - should be relative to the context
+	// path
+	Dockerfile string `json:"Dockerfile"`
 }
 
 // RunSpecification - struct specifying how a component of a simplex data processing flow should be

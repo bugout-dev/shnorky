@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -10,9 +11,11 @@ import (
 	"strings"
 	"sync"
 
+	docker "github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/simiotics/simplex/builds"
 	"github.com/simiotics/simplex/components"
 	"github.com/simiotics/simplex/state"
 )
@@ -58,6 +61,14 @@ func openStateDB(stateDir string) *sql.DB {
 		log.WithFields(logrus.Fields{"stateDBPath": stateDBPath, "error": err}).Fatal("Error opening state database")
 	}
 	return db
+}
+
+func generateDockerClient() *docker.Client {
+	client, err := docker.NewEnvClient()
+	if err != nil {
+		log.WithField("error", err).Fatal("Error creating docker client")
+	}
+	return client
 }
 
 func main() {
@@ -246,7 +257,81 @@ remove unwanted components from your simplex state).
 
 	componentsCommand.AddCommand(addComponentCommand, listComponentsCommand, removeComponentCommand)
 
-	simplexCommand.AddCommand(versionCommand, completionCommand, stateCommand, componentsCommand)
+	// simplex builds
+	buildsCommand := &cobra.Command{
+		Use:   "builds",
+		Short: "Interact with simplex builds",
+		Long: `Interact with simplex builds
+
+simplex builds are images that can be used to execute simplex components inside containers. A build
+derives from a component.
+`,
+	}
+
+	createBuildCommand := &cobra.Command{
+		Use:   "create",
+		Short: "Create a build for a specific component",
+		Long:  "Creates an image for the specified component using its current state on the filesystem",
+		Run: func(cmd *cobra.Command, args []string) {
+			db := openStateDB(stateDir)
+			defer db.Close()
+
+			dockerClient := generateDockerClient()
+
+			ctx := context.Background()
+
+			_, err := builds.CreateBuild(ctx, db, os.Stdout, dockerClient, id)
+			if err != nil {
+				log.WithField("error", err).Fatal("WTF")
+			}
+		},
+	}
+
+	createBuildCommand.Flags().StringVarP(&id, "component", "c", "", "ID of the component for which build is being created")
+
+	listBuildsCommand := &cobra.Command{
+		Use:   "list",
+		Short: "List builds registered against the state database",
+		Long:  "Lists builds that have previously been added to the state database (allows listing by component ID)",
+		Run: func(cmd *cobra.Command, args []string) {
+			logger := log.WithField("component", id)
+
+			var wg sync.WaitGroup
+			buildsChan := make(chan builds.BuildMetadata)
+			db := openStateDB(stateDir)
+			defer db.Close()
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for {
+					enc := json.NewEncoder(os.Stdout)
+					build, ok := <-buildsChan
+					if !ok {
+						return
+					}
+					err := enc.Encode(build)
+					if err != nil {
+						logger.WithField("build", build).WithField("error", err).Error("Error marshalling build")
+					}
+				}
+			}()
+
+			err := builds.ListBuilds(db, buildsChan, id)
+			if err != nil {
+				logger.WithField("error", err).Fatal("Could not list builds")
+			}
+			wg.Wait()
+
+			logger.Info("ListBuilds done")
+		},
+	}
+
+	listBuildsCommand.Flags().StringVarP(&id, "component", "c", "", "ID of the component for which builds are being created (optional; if not set, lists all builds)")
+
+	buildsCommand.AddCommand(createBuildCommand, listBuildsCommand)
+
+	simplexCommand.AddCommand(versionCommand, completionCommand, stateCommand, componentsCommand, buildsCommand)
 
 	err = simplexCommand.Execute()
 	if err != nil {
