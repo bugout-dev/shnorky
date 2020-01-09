@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
@@ -127,12 +128,18 @@ func CreateBuild(ctx context.Context, db *sql.DB, outstream io.Writer, dockerCli
 	}
 	defer buildContext.Close()
 
-	opts := dockerTypes.ImageBuildOptions{
-		Tags:       []string{buildMetadata.ID},
+	tags := []string{buildMetadata.ID}
+	imageIDComponents := strings.Split(buildMetadata.ID, ":")
+	if len(imageIDComponents) > 1 {
+		imageIDComponents[len(imageIDComponents)-1] = "latest"
+		tags = append(tags, strings.Join(imageIDComponents, ":"))
+	}
+	buildOptions := dockerTypes.ImageBuildOptions{
+		Tags:       tags,
 		Dockerfile: specification.Build.Dockerfile,
 	}
 
-	response, err := dockerClient.ImageBuild(ctx, buildContext, opts)
+	response, err := dockerClient.ImageBuild(ctx, buildContext, buildOptions)
 	if err != nil {
 		return buildMetadata, fmt.Errorf("Error building image: %s", err.Error())
 	}
