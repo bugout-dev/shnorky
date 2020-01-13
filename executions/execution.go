@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/user"
 	"time"
 
+	dockerTypes "github.com/docker/docker/api/types"
 	dockerContainer "github.com/docker/docker/api/types/container"
 	docker "github.com/docker/docker/client"
 	"github.com/google/uuid"
@@ -84,9 +86,35 @@ func ExecuteBuild(
 		Image: buildMetadata.ID,
 	}
 
-	_, err = dockerClient.ContainerCreate(ctx, containerConfig, nil, nil, executionMetadata.ID)
+	if specification.Run.User == "${CURRENT_USER}" {
+		targetUser, err := user.Current()
+		if err != nil {
+			return executionMetadata, fmt.Errorf("Error retrieving information about current user (as per $CURRENT value set in component specification: %s", err.Error())
+		}
+		containerConfig.User = targetUser.Uid
+	} else if len(specification.Run.User) >= 5 && specification.Run.User[:5] == "name:" {
+		targetUser, err := user.Lookup(specification.Run.User[5:])
+		if err != nil {
+			return executionMetadata, fmt.Errorf("Error looking up user with given username (%s): %s", specification.Run.User[5:], err)
+		}
+		containerConfig.User = targetUser.Uid
+	} else {
+		containerConfig.User = specification.Run.User
+	}
+
+	// TODO(nkashy1): Process mounts from specification into containerConfig.
+
+	response, err := dockerClient.ContainerCreate(ctx, containerConfig, nil, nil, executionMetadata.ID)
 	if err != nil {
 		return executionMetadata, fmt.Errorf("Error creating container for build (%s): %s", buildMetadata.ID, err.Error())
+	}
+	if response.ID != executionMetadata.ID {
+		return executionMetadata, fmt.Errorf("Container ID assigned by docker daemon (%s) did not match execution metadata ID (%s): %s", response.ID, executionMetadata.ID, err.Error())
+	}
+
+	err = dockerClient.ContainerStart(ctx, response.ID, dockerTypes.ContainerStartOptions{})
+	if err != nil {
+		return executionMetadata, fmt.Errorf("Error starting container (ID=%s): %s", response.ID, err.Error())
 	}
 
 	return executionMetadata, nil

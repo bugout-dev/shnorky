@@ -1,0 +1,23 @@
+{
+    "build": {
+        "context": "",
+        "Dockerfile": "Dockerfile"
+    },
+    "run": {
+        "env": {
+            "MY_ENV": "hello world"
+        },
+        "mountpoints": [
+            {
+                "mountpoint": "/custom/inputs.txt",
+                "read_only": true,
+                "required": true
+            },
+            {
+                "mountpoint": "/custom/outputs.txt",
+                "read_only": false,
+                "required": true
+            }
+        ]
+    }
+}

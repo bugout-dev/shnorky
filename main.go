@@ -361,7 +361,7 @@ that the build represents.
 				log.WithField("error", err).Fatal("Could not execute build")
 			}
 
-			fmt.Println(executionMetadata)
+			fmt.Println(executionMetadata.ID)
 		},
 	}
 
