@@ -25,8 +25,8 @@ type ExecutionMetadata struct {
 	ID          string    `json:"id"`
 	BuildID     string    `json:"build_id"`
 	ComponentID string    `json:"component_id"`
-	FlowID      string    `json:"flow_id"`
 	CreatedAt   time.Time `json:"created_at"`
+	FlowID      string    `json:"flow_id"`
 }
 
 // GenerateExecutionMetadata creates an ExecutionMetadata instance representing a potential
