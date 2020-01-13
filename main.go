@@ -17,6 +17,7 @@ import (
 
 	"github.com/simiotics/simplex/builds"
 	"github.com/simiotics/simplex/components"
+	"github.com/simiotics/simplex/executions"
 	"github.com/simiotics/simplex/state"
 )
 
@@ -159,7 +160,7 @@ remove unwanted components from your simplex state).
 	}
 
 	addComponentCommand := &cobra.Command{
-		Use:   "add",
+		Use:   "create",
 		Short: "Add a component to simplex",
 		Long:  "Adds a new component to simplex and makes it available in the state database",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -329,8 +330,22 @@ derives from a component.
 
 	listBuildsCommand.Flags().StringVarP(&id, "component", "c", "", "ID of the component for which builds are being created (optional; if not set, lists all builds)")
 
-	executeBuildCommand := &cobra.Command{
-		Use:   "execute",
+	buildsCommand.AddCommand(createBuildCommand, listBuildsCommand)
+
+	// simplex executions
+	executionsCommand := &cobra.Command{
+		Use:   "executions",
+		Short: "Interact with simplex executions",
+		Long: `Interact with simplex executions
+
+simplex executions are tasks or services created run from simplex builds. Each execution is
+associated with a single build, and any configuration it requires is specified in the component
+that the build represents.
+`,
+	}
+
+	createExecutionCommand := &cobra.Command{
+		Use:   "create",
 		Short: "Execute a build for a specific component",
 		Long:  "Creates a container for the given build and registers the container in the state database",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -341,7 +356,7 @@ derives from a component.
 
 			ctx := context.Background()
 
-			executionMetadata, err := builds.ExecuteBuild(ctx, db, dockerClient, id, "")
+			executionMetadata, err := executions.ExecuteBuild(ctx, db, dockerClient, id, "")
 			if err != nil {
 				log.WithField("error", err).Fatal("Could not execute build")
 			}
@@ -350,11 +365,11 @@ derives from a component.
 		},
 	}
 
-	executeBuildCommand.Flags().StringVarP(&id, "build", "b", "", "ID of the build being executed")
+	createExecutionCommand.Flags().StringVarP(&id, "build", "b", "", "ID of the build being executed")
 
-	buildsCommand.AddCommand(createBuildCommand, listBuildsCommand, executeBuildCommand)
+	executionsCommand.AddCommand(createExecutionCommand)
 
-	simplexCommand.AddCommand(versionCommand, completionCommand, stateCommand, componentsCommand, buildsCommand)
+	simplexCommand.AddCommand(versionCommand, completionCommand, stateCommand, componentsCommand, buildsCommand, executionsCommand)
 
 	err = simplexCommand.Execute()
 	if err != nil {

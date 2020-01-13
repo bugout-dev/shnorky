@@ -1,4 +1,4 @@
-package builds
+package executions
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	docker "github.com/docker/docker/client"
 	"github.com/google/uuid"
 
+	"github.com/simiotics/simplex/builds"
 	"github.com/simiotics/simplex/components"
 )
 
@@ -30,12 +31,12 @@ type ExecutionMetadata struct {
 
 // GenerateExecutionMetadata creates an ExecutionMetadata instance representing a potential
 // execution of the build specified by the given build metadata.
-func GenerateExecutionMetadata(build BuildMetadata, flowID string) (ExecutionMetadata, error) {
+func GenerateExecutionMetadata(build builds.BuildMetadata, flowID string) (ExecutionMetadata, error) {
 	if build.ID == "" {
 		return ExecutionMetadata{}, ErrEmptyBuildID
 	}
 	if build.ComponentID == "" {
-		return ExecutionMetadata{}, ErrEmptyComponentID
+		return ExecutionMetadata{}, builds.ErrEmptyComponentID
 	}
 
 	createdAt := time.Now()
@@ -56,7 +57,7 @@ func ExecuteBuild(
 	buildID string,
 	flowID string,
 ) (ExecutionMetadata, error) {
-	buildMetadata, err := SelectBuildByID(db, buildID)
+	buildMetadata, err := builds.SelectBuildByID(db, buildID)
 	if err != nil {
 		return ExecutionMetadata{}, fmt.Errorf("Error retrieving build metadata for build ID (%s) from state database: %s", buildID, err.Error())
 	}
