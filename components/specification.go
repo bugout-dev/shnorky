@@ -83,6 +83,7 @@ func ReadSingleSpecification(reader io.Reader) (ComponentSpecification, error) {
 	var specification ComponentSpecification
 	err := dec.Decode(&specification)
 
+	// Check that mountpoints have valid mount_type fields
 	for _, mountpoint := range specification.Run.Mountpoints {
 		if _, ok := ValidMountTypes[mountpoint.MountType]; !ok {
 			return specification, ErrInvalidMountType
