@@ -356,7 +356,7 @@ that the build represents.
 
 			ctx := context.Background()
 
-			executionMetadata, err := executions.Execute(ctx, db, dockerClient, id, "")
+			executionMetadata, err := executions.Execute(ctx, db, dockerClient, id, "", nil)
 			if err != nil {
 				log.WithField("error", err).Fatal("Could not execute build")
 			}

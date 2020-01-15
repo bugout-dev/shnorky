@@ -11,6 +11,7 @@ import (
 
 	dockerTypes "github.com/docker/docker/api/types"
 	dockerContainer "github.com/docker/docker/api/types/container"
+	dockerMount "github.com/docker/docker/api/types/mount"
 	docker "github.com/docker/docker/client"
 	"github.com/google/uuid"
 
@@ -58,7 +59,13 @@ func Execute(
 	dockerClient *docker.Client,
 	buildID string,
 	flowID string,
+	mounts map[string]string,
 ) (ExecutionMetadata, error) {
+	var inverseMounts map[string]string
+	for source, target := range mounts {
+		inverseMounts[target] = source
+	}
+
 	buildMetadata, err := builds.SelectBuildByID(db, buildID)
 	if err != nil {
 		return ExecutionMetadata{}, fmt.Errorf("Error retrieving build metadata for build ID (%s) from state database: %s", buildID, err.Error())
@@ -102,9 +109,32 @@ func Execute(
 		containerConfig.User = specification.Run.User
 	}
 
-	// TODO(nkashy1): Process mounts from specification into containerConfig.
+	hostConfig := &dockerContainer.HostConfig{
+		Mounts: make([]dockerMount.Mount, len(inverseMounts)),
+	}
 
-	response, err := dockerClient.ContainerCreate(ctx, containerConfig, nil, nil, executionMetadata.ID)
+	currentMount := 0
+	for _, mountpoint := range specification.Run.Mountpoints {
+		source, ok := inverseMounts[mountpoint.Mountpoint]
+		if mountpoint.Required && !ok {
+			return executionMetadata, fmt.Errorf("No mount provided for required mountpoint: %s", mountpoint.Mountpoint)
+		}
+
+		if ok {
+			if currentMount > len(inverseMounts) {
+				return executionMetadata, errors.New("Too many mounts in host configuration")
+			}
+			hostConfig.Mounts[currentMount] = dockerMount.Mount{
+				Type:   components.ValidMountTypes[mountpoint.MountType],
+				Source: source,
+				Target: mountpoint.Mountpoint,
+			}
+
+			currentMount++
+		}
+	}
+
+	response, err := dockerClient.ContainerCreate(ctx, containerConfig, hostConfig, nil, executionMetadata.ID)
 	if err != nil {
 		return executionMetadata, fmt.Errorf("Error creating container for build (%s): %s", buildMetadata.ID, err.Error())
 	}

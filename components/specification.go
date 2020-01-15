@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+
+	dockerMount "github.com/docker/docker/api/types/mount"
 )
 
 // ComponentSpecification - struct specifying how a component of a simplex data processing flow
@@ -62,16 +64,15 @@ type MountSpecification struct {
 
 // ValidMountTypes defines the values for the "run.mountpoints[].mount_type" fields which are
 // understood by the component specification parser
-var ValidMountTypes = map[string]bool{
-	"bind":   true,
-	"volume": true,
-	"tmpfs":  true,
-	"npipe":  true,
+var ValidMountTypes = map[string]dockerMount.Type{
+	"bind":   dockerMount.TypeBind,
+	"volume": dockerMount.TypeVolume,
+	"tmpfs":  dockerMount.TypeTmpfs,
 }
 
 // ErrInvalidMountType signifies that there was an error parsing a mount in a component run
 // specification. It indicates that the mount type specified for the mount is not a known value.
-var ErrInvalidMountType = errors.New("Invalid mount type in component specification: must be one of \"bind\", \"volume\", \"tmpfs\", \"npipe\"")
+var ErrInvalidMountType = errors.New("Invalid mount type in component specification: must be one of \"bind\", \"volume\", \"tmpfs\"")
 
 // ReadSingleSpecification reads a single ComponentSpecification JSON document and returns the
 // corresponding ComponentSpecification struct. It returns an error if there was an issue parsing
