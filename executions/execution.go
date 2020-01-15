@@ -51,8 +51,8 @@ func GenerateExecutionMetadata(build builds.BuildMetadata, flowID string) (Execu
 	return ExecutionMetadata{ID: executionID.String(), BuildID: build.ID, ComponentID: build.ComponentID, CreatedAt: createdAt, FlowID: flowID}, nil
 }
 
-// ExecuteBuild runs a container corresponding to the given build of the given component.
-func ExecuteBuild(
+// Execute runs a container corresponding to the given build of the given component.
+func Execute(
 	ctx context.Context,
 	db *sql.DB,
 	dockerClient *docker.Client,
