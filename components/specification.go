@@ -2,6 +2,7 @@ package components
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 )
 
@@ -52,16 +53,25 @@ type RunSpecification struct {
 // on the container side, and whether or not it is required to be mounted at runtime
 type MountSpecification struct {
 	// See documentation of mount type here: https://godoc.org/github.com/docker/docker/api/types/mount#Type
-	// Can be one of "bind", "volume", "tmpfs", "npipe"
-	// TODO(nkashy1): Check the value of MountType when parsing specification. This is where JSONSchema
-	// may be a good idea. However, rather than integrating JSONSchema right away, the best fix is
-	// probably just to make explicit checks for this kind of thing in the `ReadSingleSpecification`
-	// function.
+	// Can be one of the keys of the ValidMountTypes map.
 	MountType  string `json:"mount_type"`
 	Mountpoint string `json:"mountpoint"`
 	ReadOnly   bool   `json:"read_only"`
 	Required   bool   `json:"required"`
 }
+
+// ValidMountTypes defines the values for the "run.mountpoints[].mount_type" fields which are
+// understood by the component specification parser
+var ValidMountTypes = map[string]bool{
+	"bind":   true,
+	"volume": true,
+	"tmpfs":  true,
+	"npipe":  true,
+}
+
+// ErrInvalidMountType signifies that there was an error parsing a mount in a component run
+// specification. It indicates that the mount type specified for the mount is not a known value.
+var ErrInvalidMountType = errors.New("Invalid mount type in component specification: must be one of \"bind\", \"volume\", \"tmpfs\", \"npipe\"")
 
 // ReadSingleSpecification reads a single ComponentSpecification JSON document and returns the
 // corresponding ComponentSpecification struct. It returns an error if there was an issue parsing
@@ -72,5 +82,12 @@ func ReadSingleSpecification(reader io.Reader) (ComponentSpecification, error) {
 
 	var specification ComponentSpecification
 	err := dec.Decode(&specification)
+
+	for _, mountpoint := range specification.Run.Mountpoints {
+		if _, ok := ValidMountTypes[mountpoint.MountType]; !ok {
+			return specification, ErrInvalidMountType
+		}
+	}
+
 	return specification, err
 }

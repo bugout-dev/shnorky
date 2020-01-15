@@ -9,6 +9,7 @@ func TestReadSingleSpecification(t *testing.T) {
 	type ReadSingleSpecificationTestCase struct {
 		specificationRaw string
 		returnsError     bool
+		testError        error
 	}
 
 	testCases := []ReadSingleSpecificationTestCase{
@@ -25,6 +26,7 @@ func TestReadSingleSpecification(t *testing.T) {
 		"cmd": ["echo", "hello", "world"],
 		"mountpoints": [
 			{
+				"mount_type": "bind",
 				"mountpoint": "/opt/mounthere",
 				"read_only": false,
 				"required": true
@@ -34,6 +36,31 @@ func TestReadSingleSpecification(t *testing.T) {
 }`,
 			returnsError: false,
 		},
+		// Invalid mount_type
+		{
+			specificationRaw: `
+{
+	"build": {
+		"Dockerfile": "Dockerfile",
+		"context": "component-dir"
+	},
+	"run": {
+		"env": {"ENV_KEY_1": "ENV_VALUE_1", "ENV_KEY_2": "ENV_VALUE_2"},
+		"cmd": ["echo", "hello", "world"],
+		"mountpoints": [
+			{
+				"mount_type": "xylophone",
+				"mountpoint": "/opt/mounthere",
+				"read_only": false,
+				"required": true
+			}
+		]
+	}
+}`,
+			returnsError: true,
+			testError:    ErrInvalidMountType,
+		},
+
 		// No extra keys allowed in any object
 		{
 			specificationRaw: `
@@ -48,6 +75,7 @@ func TestReadSingleSpecification(t *testing.T) {
 		"cmd": ["echo", "hello", "world"],
 		"mountpoints": [
 			{
+				"mount_type": "bind",
 				"mountpoint": "/opt/mounthere",
 				"read_only": false,
 				"required": true
@@ -70,6 +98,7 @@ func TestReadSingleSpecification(t *testing.T) {
 		"cmd": ["echo", "hello", "world"],
 		"mountpoints": [
 			{
+				"mount_type": "bind",
 				"mountpoint": "/opt/mounthere",
 				"read_only": false,
 				"required": true
@@ -92,6 +121,7 @@ func TestReadSingleSpecification(t *testing.T) {
 		"cmd": "bash",
 		"mountpoints": [
 			{
+				"mount_type": "bind",
 				"mountpoint": "/opt/mounthere",
 				"read_only": false,
 				"required": true
@@ -126,6 +156,8 @@ func TestReadSingleSpecification(t *testing.T) {
 			t.Errorf("[Test %d] Did not expect error: %s", i, err.Error())
 		} else if err == nil && testCase.returnsError {
 			t.Errorf("[Test %d] Expected error but received none", i)
+		} else if testCase.returnsError && testCase.testError != nil && err != testCase.testError {
+			t.Errorf("[Test %d] Did not get expected error: expected=%s, actual=%s", i, testCase.testError.Error(), err.Error())
 		}
 	}
 }
