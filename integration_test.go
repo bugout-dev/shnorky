@@ -158,4 +158,6 @@ func TestSingleComponent(t *testing.T) {
 	if terminating > 1 {
 		t.Fatalf("Too many terminating newlines in output file: %d", terminating)
 	}
+
+	// TODO(nkashy1): Implement execution state management and add those functions into this test
 }
