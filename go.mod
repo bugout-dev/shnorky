@@ -11,7 +11,9 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/mattn/go-sqlite3 v2.0.2+incompatible
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
-	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
+	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa // indirect
+	golang.org/x/sys v0.0.0-20200113162924-86b910548bc1 // indirect
 )

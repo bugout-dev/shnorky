@@ -61,7 +61,7 @@ func Execute(
 	flowID string,
 	mounts map[string]string,
 ) (ExecutionMetadata, error) {
-	var inverseMounts map[string]string
+	inverseMounts := map[string]string{}
 	for source, target := range mounts {
 		inverseMounts[target] = source
 	}
@@ -137,9 +137,6 @@ func Execute(
 	response, err := dockerClient.ContainerCreate(ctx, containerConfig, hostConfig, nil, executionMetadata.ID)
 	if err != nil {
 		return executionMetadata, fmt.Errorf("Error creating container for build (%s): %s", buildMetadata.ID, err.Error())
-	}
-	if response.ID != executionMetadata.ID {
-		return executionMetadata, fmt.Errorf("Container ID assigned by docker daemon (%s) did not match execution metadata ID (%s): %s", response.ID, executionMetadata.ID, err.Error())
 	}
 
 	err = dockerClient.ContainerStart(ctx, response.ID, dockerTypes.ContainerStartOptions{})

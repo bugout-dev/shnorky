@@ -9,12 +9,14 @@
         },
         "mountpoints": [
             {
-                "mountpoint": "/custom/inputs.txt",
+                "mount_type": "bind",
+                "mountpoint": "/simplex/inputs/inputs.txt",
                 "read_only": true,
                 "required": true
             },
             {
-                "mountpoint": "/custom/outputs.txt",
+                "mount_type": "bind",
+                "mountpoint": "/simplex/outputs/outputs.txt",
                 "read_only": false,
                 "required": true
             }

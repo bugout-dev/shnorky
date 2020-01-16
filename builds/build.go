@@ -137,6 +137,9 @@ func CreateBuild(ctx context.Context, db *sql.DB, dockerClient *docker.Client, o
 	buildOptions := dockerTypes.ImageBuildOptions{
 		Tags:       tags,
 		Dockerfile: specification.Build.Dockerfile,
+		// Setting Remove to true means that intermediate containers for the build will be removed
+		// on a successful build.
+		Remove: true,
 	}
 
 	response, err := dockerClient.ImageBuild(ctx, buildContext, buildOptions)
