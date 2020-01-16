@@ -93,6 +93,14 @@ func Execute(
 		Image: buildMetadata.ID,
 	}
 
+	containerConfig.Env = make([]string, len(specification.Run.Env))
+	i := 0
+	for key, value := range specification.Run.Env {
+		envvar := fmt.Sprintf("%s=%s", key, value)
+		containerConfig.Env[i] = envvar
+		i++
+	}
+
 	if specification.Run.User == "${CURRENT_USER}" {
 		targetUser, err := user.Current()
 		if err != nil {

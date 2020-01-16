@@ -141,7 +141,7 @@ func TestSingleComponent(t *testing.T) {
 		t.Fatal("Not enough lines in output file")
 	}
 	line := scanner.Text()
-	expectedLine := "+1"
+	expectedLine := specification.Run.Env["MY_ENV"]
 	if line != expectedLine {
 		t.Fatalf("Incorrect value in output file: expected=\"%s\", actual=\"%s\"", expectedLine, line)
 	}
