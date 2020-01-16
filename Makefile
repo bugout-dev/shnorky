@@ -1,10 +1,12 @@
+test_target ?= ./...
+
 build: simplex
 
 format:
 	gofmt -s -w .
 
 test:
-	go test $(cli_args) ./...
+	go test $(cli_args) $(test_target)
 
 clean:
 	touch simplex
