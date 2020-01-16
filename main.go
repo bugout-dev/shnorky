@@ -344,6 +344,10 @@ that the build represents.
 `,
 	}
 
+	// TODO(nkashy1): Accept mounts from command line (as a JSON string?)
+	// TODO(nkashy1): How to handle execution of flows vs builds? Current implementation simply
+	// executes builds. Simplest idea is to provide "--build" and "--flow" flags and validate that
+	// only one is set in createExecutionCommand.PreRun.
 	createExecutionCommand := &cobra.Command{
 		Use:   "create",
 		Short: "Execute a build for a specific component",

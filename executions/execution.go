@@ -97,8 +97,7 @@ func Execute(
 	i := 0
 	for key, value := range specification.Run.Env {
 		// Handle special values in specification
-		// TODO(nkashy1): Factor this materialization out into its own function. Should live beside
-		// definition of specification.
+		// TODO(nkashy1): Factor this materialization out into its own function.
 		materializedValue := value
 		if len(value) > 4 && value[:4] == "env:" {
 			materializedValue = os.Getenv(value[4:])
@@ -108,8 +107,7 @@ func Execute(
 		i++
 	}
 
-	// TODO(nkashy1): Factor out this handling of special values for specification.Run.User into its
-	// own function. Should live beside definition of specification.
+	// TODO(nkashy1): Factor out handling of special values into separate function.
 	if specification.Run.User == "${CURRENT_USER}" {
 		targetUser, err := user.Current()
 		if err != nil {
