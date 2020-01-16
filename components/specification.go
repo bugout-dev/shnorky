@@ -31,6 +31,13 @@ type BuildSpecification struct {
 // executed
 type RunSpecification struct {
 	// Mapping of environment variable names to values to be set in component container at runtime
+	// Special keys:
+	//
+	// Special values:
+	// "env:<VARIABLE_NAME>" - specifies that the value of the environment variable denoted by
+	// VARIABLE_NAME in the simplex process should be interpolated into the specification; if the
+	// environment variable is not set in the simplex process, it will use the empty string "" as
+	// the value
 	Env map[string]string `json:"env"`
 
 	// Entrypoint override for containers representing this component

@@ -96,11 +96,20 @@ func Execute(
 	containerConfig.Env = make([]string, len(specification.Run.Env))
 	i := 0
 	for key, value := range specification.Run.Env {
-		envvar := fmt.Sprintf("%s=%s", key, value)
+		// Handle special values in specification
+		// TODO(nkashy1): Factor this materialization out into its own function. Should live beside
+		// definition of specification.
+		materializedValue := value
+		if len(value) > 4 && value[:4] == "env:" {
+			materializedValue = os.Getenv(value[4:])
+		}
+		envvar := fmt.Sprintf("%s=%s", key, materializedValue)
 		containerConfig.Env[i] = envvar
 		i++
 	}
 
+	// TODO(nkashy1): Factor out this handling of special values for specification.Run.User into its
+	// own function. Should live beside definition of specification.
 	if specification.Run.User == "${CURRENT_USER}" {
 		targetUser, err := user.Current()
 		if err != nil {
