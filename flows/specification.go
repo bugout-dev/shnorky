@@ -17,19 +17,6 @@ type FlowSpecification struct {
 	Dependencies map[string][]string `json:"dependencies"`
 }
 
-// ReadSingleSpecification reads a single ComponentSpecification JSON document and returns the
-// corresponding ComponentSpecification struct. It returns an error if there was an issue parsing
-// the specification into the struct.
-func ReadSingleSpecification(reader io.Reader) (FlowSpecification, error) {
-	dec := json.NewDecoder(reader)
-	dec.DisallowUnknownFields()
-
-	var specification FlowSpecification
-	err := dec.Decode(&specification)
-
-	return specification, err
-}
-
 // ValidateSpecification accepts a FlowSpecification and returns nil if the specification is valid
 // and returns an appropriate error if that is not the case.
 func ValidateSpecification(specification FlowSpecification) error {
@@ -54,6 +41,27 @@ func ValidateSpecification(specification FlowSpecification) error {
 	}
 
 	return nil
+}
+
+// ReadSingleSpecification reads a single ComponentSpecification JSON document and returns the
+// corresponding ComponentSpecification struct. It returns an error if there was an issue parsing
+// the specification into the struct.
+func ReadSingleSpecification(reader io.Reader) (FlowSpecification, error) {
+	dec := json.NewDecoder(reader)
+	dec.DisallowUnknownFields()
+
+	var specification FlowSpecification
+	err := dec.Decode(&specification)
+	if err != nil {
+		return specification, fmt.Errorf("Error decoding flow specification: %s", err.Error())
+	}
+
+	err = ValidateSpecification(specification)
+	if err != nil {
+		return specification, fmt.Errorf("Error validating flow specification: %s", err.Error())
+	}
+
+	return specification, nil
 }
 
 // ErrCyclicDependency is returned when flow dependency resolution fails because there was a cycle

@@ -60,6 +60,10 @@ type RunSpecification struct {
 
 // MountSpecification - specifies a mount point within a simplex component, how it should be mounted
 // on the container side, and whether or not it is required to be mounted at runtime
+// TODO(nkashy1): It does not make sense to specify this kind of mount type in the
+// MountSpecification - the mount type (e.g. whether it is a bind mount or a docker volume mount) is
+// the responsibility of the caller. What does make sense is for MountType to specify the type of
+// filesystem object that the mountpoint expects (e.g. file vs. directory)
 type MountSpecification struct {
 	// See documentation of mount type here: https://godoc.org/github.com/docker/docker/api/types/mount#Type
 	// Can be one of the keys of the ValidMountTypes map.
