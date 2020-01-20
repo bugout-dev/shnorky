@@ -1,0 +1,9 @@
+{
+    "steps": {
+        "first": "single-task",
+        "second": "single-task"
+    },
+    "dependencies": {
+        "second": ["first"]
+    }
+}
