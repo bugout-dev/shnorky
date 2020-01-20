@@ -1,4 +1,4 @@
-package executions
+package components
 
 import (
 	"context"
@@ -14,8 +14,6 @@ import (
 	dockerMount "github.com/docker/docker/api/types/mount"
 	docker "github.com/docker/docker/client"
 	"github.com/google/uuid"
-
-	"github.com/simiotics/simplex/components"
 )
 
 // ErrEmptyBuildID signifies that a caller attempted to create execution metadata in which the
@@ -33,12 +31,12 @@ type ExecutionMetadata struct {
 
 // GenerateExecutionMetadata creates an ExecutionMetadata instance representing a potential
 // execution of the build specified by the given build metadata.
-func GenerateExecutionMetadata(build components.BuildMetadata, flowID string) (ExecutionMetadata, error) {
+func GenerateExecutionMetadata(build BuildMetadata, flowID string) (ExecutionMetadata, error) {
 	if build.ID == "" {
 		return ExecutionMetadata{}, ErrEmptyBuildID
 	}
 	if build.ComponentID == "" {
-		return ExecutionMetadata{}, components.ErrEmptyComponentID
+		return ExecutionMetadata{}, ErrEmptyComponentID
 	}
 
 	createdAt := time.Now()
@@ -65,7 +63,7 @@ func Execute(
 		inverseMounts[target] = source
 	}
 
-	buildMetadata, err := components.SelectBuildByID(db, buildID)
+	buildMetadata, err := SelectBuildByID(db, buildID)
 	if err != nil {
 		return ExecutionMetadata{}, fmt.Errorf("Error retrieving build metadata for build ID (%s) from state database: %s", buildID, err.Error())
 	}
@@ -75,14 +73,14 @@ func Execute(
 		return ExecutionMetadata{}, fmt.Errorf("Error generating execution metadata for build (%s): %s", buildMetadata.ID, err.Error())
 	}
 
-	componentMetadata, err := components.SelectComponentByID(db, buildMetadata.ComponentID)
+	componentMetadata, err := SelectComponentByID(db, buildMetadata.ComponentID)
 	if err != nil {
 		return executionMetadata, fmt.Errorf("Error retrieving component metadata for component ID (%s) from state database: %s", buildMetadata.ComponentID, err.Error())
 	}
 
 	specFile, err := os.Open(componentMetadata.SpecificationPath)
 	defer specFile.Close()
-	specification, err := components.ReadSingleSpecification(specFile)
+	specification, err := ReadSingleSpecification(specFile)
 	if err != nil {
 		return executionMetadata, fmt.Errorf("Could not open specification file (%s): %s", componentMetadata.SpecificationPath, err.Error())
 	}
@@ -139,7 +137,7 @@ func Execute(
 				return executionMetadata, errors.New("Too many mounts in host configuration")
 			}
 			hostConfig.Mounts[currentMount] = dockerMount.Mount{
-				Type:   components.ValidMountTypes[mountpoint.MountType],
+				Type:   ValidMountTypes[mountpoint.MountType],
 				Source: source,
 				Target: mountpoint.Mountpoint,
 			}

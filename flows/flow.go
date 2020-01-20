@@ -12,7 +12,6 @@ import (
 	docker "github.com/docker/docker/client"
 
 	"github.com/simiotics/simplex/components"
-	"github.com/simiotics/simplex/executions"
 )
 
 // ErrEmptyID signifies that a caller attempted to create component metadata in which the ID string
@@ -116,33 +115,33 @@ func Execute(
 	buildsMetadata map[string]components.BuildMetadata,
 	flowID string,
 	mounts map[string]map[string]string,
-) (map[string]executions.ExecutionMetadata, error) {
+) (map[string]components.ExecutionMetadata, error) {
 	flow, err := SelectFlowByID(db, flowID)
 	if err != nil {
-		return map[string]executions.ExecutionMetadata{}, err
+		return map[string]components.ExecutionMetadata{}, err
 	}
 
 	specFile, err := os.Open(flow.SpecificationPath)
 	if err != nil {
-		return map[string]executions.ExecutionMetadata{}, err
+		return map[string]components.ExecutionMetadata{}, err
 	}
 
 	specification, err := ReadSingleSpecification(specFile)
 	if err != nil {
-		return map[string]executions.ExecutionMetadata{}, err
+		return map[string]components.ExecutionMetadata{}, err
 	}
 
 	stages, err := CalculateStages(specification)
 	if err != nil {
-		return map[string]executions.ExecutionMetadata{}, err
+		return map[string]components.ExecutionMetadata{}, err
 	}
 
-	componentExecutions := map[string]executions.ExecutionMetadata{}
+	componentExecutions := map[string]components.ExecutionMetadata{}
 	for _, stage := range stages {
-		stepExecutions := map[string]executions.ExecutionMetadata{}
+		stepExecutions := map[string]components.ExecutionMetadata{}
 		for _, step := range stage {
 			stepComponent := specification.Steps[step]
-			executionMetadata, err := executions.Execute(ctx, db, dockerClient, buildsMetadata[stepComponent].ID, flowID, mounts[step])
+			executionMetadata, err := components.Execute(ctx, db, dockerClient, buildsMetadata[stepComponent].ID, flowID, mounts[step])
 			if err != nil {
 				return componentExecutions, err
 			}

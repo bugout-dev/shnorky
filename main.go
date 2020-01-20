@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/simiotics/simplex/components"
-	"github.com/simiotics/simplex/executions"
 	"github.com/simiotics/simplex/state"
 )
 
@@ -356,7 +355,7 @@ that the build represents.
 
 			ctx := context.Background()
 
-			executionMetadata, err := executions.Execute(ctx, db, dockerClient, id, "", nil)
+			executionMetadata, err := components.Execute(ctx, db, dockerClient, id, "", nil)
 			if err != nil {
 				log.WithField("error", err).Fatal("Could not execute build")
 			}

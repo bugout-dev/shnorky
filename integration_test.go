@@ -13,7 +13,6 @@ import (
 	dockerTypes "github.com/docker/docker/api/types"
 
 	"github.com/simiotics/simplex/components"
-	"github.com/simiotics/simplex/executions"
 	"github.com/simiotics/simplex/flows"
 	"github.com/simiotics/simplex/state"
 )
@@ -113,7 +112,7 @@ func TestSingleComponent(t *testing.T) {
 		defer os.Remove(sourceFile.Name())
 	}
 
-	execution, err := executions.Execute(ctx, db, dockerClient, build.ID, "", mounts)
+	execution, err := components.Execute(ctx, db, dockerClient, build.ID, "", mounts)
 	if err != nil {
 		t.Fatalf("Error executing build (%s): %s", build.ID, err.Error())
 	}
