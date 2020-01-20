@@ -12,6 +12,7 @@ import (
 	docker "github.com/docker/docker/client"
 
 	"github.com/simiotics/simplex/builds"
+	"github.com/simiotics/simplex/executions"
 )
 
 // ErrEmptyID signifies that a caller attempted to create component metadata in which the ID string
@@ -71,26 +72,24 @@ func AddFlow(db *sql.DB, id, specificationPath string) (FlowMetadata, error) {
 }
 
 // Build - Builds images for each component of a given flow
-func Build(ctx context.Context, db *sql.DB, dockerClient *docker.Client, outstream io.Writer, flowID string) ([]builds.BuildMetadata, error) {
+func Build(ctx context.Context, db *sql.DB, dockerClient *docker.Client, outstream io.Writer, flowID string) (map[string]builds.BuildMetadata, error) {
 	flow, err := SelectFlowByID(db, flowID)
 	if err != nil {
-		return []builds.BuildMetadata{}, err
+		return map[string]builds.BuildMetadata{}, err
 	}
 
 	specFile, err := os.Open(flow.SpecificationPath)
 	if err != nil {
-		return []builds.BuildMetadata{}, err
+		return map[string]builds.BuildMetadata{}, err
 	}
 
 	specification, err := ReadSingleSpecification(specFile)
 	if err != nil {
-		return []builds.BuildMetadata{}, err
+		return map[string]builds.BuildMetadata{}, err
 	}
 
-	buildInfo := make([]builds.BuildMetadata, len(specification.Steps))
 	componentBuilds := map[string]builds.BuildMetadata{}
 
-	currentComponent := 0
 	for _, component := range specification.Steps {
 		_, ok := componentBuilds[component]
 		if ok {
@@ -99,13 +98,65 @@ func Build(ctx context.Context, db *sql.DB, dockerClient *docker.Client, outstre
 
 		buildMetadata, err := builds.CreateBuild(ctx, db, dockerClient, outstream, component)
 		if err != nil {
-			return buildInfo, err
+			return componentBuilds, err
 		}
-
-		buildInfo[currentComponent] = buildMetadata
-		currentComponent++
 	}
 
-	buildInfo = buildInfo[:currentComponent]
-	return buildInfo, nil
+	return componentBuilds, nil
+}
+
+// Execute - Executes the given builds of each step in a workflow in an order which respects the
+// dependencies between steps
+func Execute(
+	ctx context.Context,
+	db *sql.DB,
+	dockerClient *docker.Client,
+	buildsMetadata map[string]builds.BuildMetadata,
+	flowID string,
+	mounts map[string]map[string]string,
+) (map[string]executions.ExecutionMetadata, error) {
+	flow, err := SelectFlowByID(db, flowID)
+	if err != nil {
+		return map[string]executions.ExecutionMetadata{}, err
+	}
+
+	specFile, err := os.Open(flow.SpecificationPath)
+	if err != nil {
+		return map[string]executions.ExecutionMetadata{}, err
+	}
+
+	specification, err := ReadSingleSpecification(specFile)
+	if err != nil {
+		return map[string]executions.ExecutionMetadata{}, err
+	}
+
+	stages, err := CalculateStages(specification)
+	if err != nil {
+		return map[string]executions.ExecutionMetadata{}, err
+	}
+
+	componentExecutions := map[string]executions.ExecutionMetadata{}
+	for _, stage := range stages {
+		stepExecutions := map[string]executions.ExecutionMetadata{}
+		for _, step := range stage {
+			executionMetadata, err := executions.Execute(ctx, db, dockerClient, buildsMetadata[step].ID, flowID, mounts[step])
+			if err != nil {
+				return componentExecutions, err
+			}
+			componentExecutions[step] = executionMetadata
+			stepExecutions[step] = executionMetadata
+		}
+
+		for step, executionMetadata := range stepExecutions {
+			exitCode, err := dockerClient.ContainerWait(ctx, executionMetadata.ID)
+			if err != nil {
+				return componentExecutions, err
+			}
+			if exitCode != 0 {
+				return componentExecutions, fmt.Errorf("Execution for step %s completed with non-zero exit code: %d", step, exitCode)
+			}
+		}
+	}
+
+	return componentExecutions, nil
 }
