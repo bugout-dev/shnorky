@@ -15,12 +15,6 @@ CREATE TABLE flows (
 	created_at INTEGER NOT NULL
 );
 
-CREATE TABLE flow_components (
-	flow_id VARCHAR(36) NOT NULL,
-	component_id VARCHAR(36) NOT NULL,
-	created_at INTEGER NOT NULL
-);
-
 CREATE TABLE builds (
 	id VARCHAR(36) PRIMARY KEY NOT NULL,
 	component_id VARCHAR(36) NOT NULL,
