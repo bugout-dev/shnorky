@@ -11,7 +11,7 @@ import (
 
 	docker "github.com/docker/docker/client"
 
-	"github.com/simiotics/simplex/builds"
+	"github.com/simiotics/simplex/components"
 	"github.com/simiotics/simplex/executions"
 )
 
@@ -72,23 +72,23 @@ func AddFlow(db *sql.DB, id, specificationPath string) (FlowMetadata, error) {
 }
 
 // Build - Builds images for each component of a given flow
-func Build(ctx context.Context, db *sql.DB, dockerClient *docker.Client, outstream io.Writer, flowID string) (map[string]builds.BuildMetadata, error) {
+func Build(ctx context.Context, db *sql.DB, dockerClient *docker.Client, outstream io.Writer, flowID string) (map[string]components.BuildMetadata, error) {
 	flow, err := SelectFlowByID(db, flowID)
 	if err != nil {
-		return map[string]builds.BuildMetadata{}, err
+		return map[string]components.BuildMetadata{}, err
 	}
 
 	specFile, err := os.Open(flow.SpecificationPath)
 	if err != nil {
-		return map[string]builds.BuildMetadata{}, err
+		return map[string]components.BuildMetadata{}, err
 	}
 
 	specification, err := ReadSingleSpecification(specFile)
 	if err != nil {
-		return map[string]builds.BuildMetadata{}, err
+		return map[string]components.BuildMetadata{}, err
 	}
 
-	componentBuilds := map[string]builds.BuildMetadata{}
+	componentBuilds := map[string]components.BuildMetadata{}
 
 	for _, component := range specification.Steps {
 		_, ok := componentBuilds[component]
@@ -96,7 +96,7 @@ func Build(ctx context.Context, db *sql.DB, dockerClient *docker.Client, outstre
 			continue
 		}
 
-		buildMetadata, err := builds.CreateBuild(ctx, db, dockerClient, outstream, component)
+		buildMetadata, err := components.CreateBuild(ctx, db, dockerClient, outstream, component)
 		if err != nil {
 			return componentBuilds, err
 		}
@@ -113,7 +113,7 @@ func Execute(
 	ctx context.Context,
 	db *sql.DB,
 	dockerClient *docker.Client,
-	buildsMetadata map[string]builds.BuildMetadata,
+	buildsMetadata map[string]components.BuildMetadata,
 	flowID string,
 	mounts map[string]map[string]string,
 ) (map[string]executions.ExecutionMetadata, error) {

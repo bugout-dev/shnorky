@@ -11,11 +11,21 @@ import (
 // no rows
 var ErrComponentNotFound = errors.New("Could not find the specified component")
 
-// SQL statements used to manipulate component state
+// ErrBuildNotFound - signifies that a single row lookup against the builds table in a state
+// database returned no rows
+var ErrBuildNotFound = errors.New("Could not find the specified build")
+
+// SQL statements
 var insertComponent = "INSERT INTO components (id, component_type, component_path, specification_path, created_at) VALUES(?, ?, ?, ?, ?);"
 var selectComponents = "SELECT * FROM components;"
 var selectComponentByID = "SELECT * FROM components WHERE id=?;"
 var deleteComponentByID = "DELETE FROM components WHERE id=?;"
+var insertBuild = "INSERT INTO builds (id, component_id, created_at) VALUES(?, ?, ?);"
+var selectBuilds = "SELECT * FROM builds;"
+var selectBuildByID = "SELECT * FROM builds WHERE id=?;"
+var selectBuildsByComponentID = "SELECT * FROM builds WHERE component_id=?;"
+var deleteBuildByID = "DELETE FROM builds WHERE id=?;"
+var deleteBuildsByComponentID = "DELETE FROM builds WHERE component_id=?"
 
 // InsertComponent creates a new row in the components table with the given component information.
 func InsertComponent(db *sql.DB, component ComponentMetadata) error {
@@ -81,4 +91,49 @@ func DeleteComponentByID(db *sql.DB, id string) error {
 	}
 
 	return nil
+}
+
+// InsertBuild inserts the build represented by the given build metadata into the given simplex
+// state database
+func InsertBuild(db *sql.DB, buildMetadata BuildMetadata) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(
+		insertBuild,
+		buildMetadata.ID,
+		buildMetadata.ComponentID,
+		buildMetadata.CreatedAt.Unix(),
+	)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SelectBuildByID gets build metadata from the given state database using the given ID.
+// If no build with the given ID is found, returns ErrBuildNotFound in the error position.
+func SelectBuildByID(db *sql.DB, id string) (BuildMetadata, error) {
+	var rowID, componentID string
+	var createdAt int64
+	row := db.QueryRow(selectBuildByID, id)
+	err := row.Scan(&rowID, &componentID, &createdAt)
+	if err == sql.ErrNoRows {
+		return BuildMetadata{}, ErrBuildNotFound
+	}
+	if err != nil {
+		return BuildMetadata{}, err
+	}
+	if rowID != id {
+		return BuildMetadata{}, fmt.Errorf("Result had unexpected row ID: expected=%s, actual=%s", id, rowID)
+	}
+	return BuildMetadata{ID: rowID, ComponentID: componentID, CreatedAt: time.Unix(createdAt, 0)}, nil
 }

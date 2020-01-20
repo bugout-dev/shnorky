@@ -15,7 +15,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/simiotics/simplex/builds"
 	"github.com/simiotics/simplex/components"
 	"github.com/simiotics/simplex/executions"
 	"github.com/simiotics/simplex/state"
@@ -281,7 +280,7 @@ derives from a component.
 
 			ctx := context.Background()
 
-			_, err := builds.CreateBuild(ctx, db, dockerClient, os.Stdout, id)
+			_, err := components.CreateBuild(ctx, db, dockerClient, os.Stdout, id)
 			if err != nil {
 				log.WithField("error", err).Fatal("Could not create build")
 			}
@@ -298,7 +297,7 @@ derives from a component.
 			logger := log.WithField("component", id)
 
 			var wg sync.WaitGroup
-			buildsChan := make(chan builds.BuildMetadata)
+			buildsChan := make(chan components.BuildMetadata)
 			db := openStateDB(stateDir)
 			defer db.Close()
 
@@ -318,7 +317,7 @@ derives from a component.
 				}
 			}()
 
-			err := builds.ListBuilds(db, buildsChan, id)
+			err := components.ListBuilds(db, buildsChan, id)
 			if err != nil {
 				logger.WithField("error", err).Fatal("Could not list builds")
 			}
@@ -338,16 +337,13 @@ derives from a component.
 		Short: "Interact with simplex executions",
 		Long: `Interact with simplex executions
 
-simplex executions are tasks or services created run from simplex builds. Each execution is
+simplex executions are tasks or services created run from simplex components. Each execution is
 associated with a single build, and any configuration it requires is specified in the component
 that the build represents.
 `,
 	}
 
 	// TODO(nkashy1): Accept mounts from command line (as a JSON string?)
-	// TODO(nkashy1): How to handle execution of flows vs builds? Current implementation simply
-	// executes builds. Simplest idea is to provide "--build" and "--flow" flags and validate that
-	// only one is set in createExecutionCommand.PreRun.
 	createExecutionCommand := &cobra.Command{
 		Use:   "create",
 		Short: "Execute a build for a specific component",

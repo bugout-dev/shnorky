@@ -12,7 +12,6 @@ import (
 
 	dockerTypes "github.com/docker/docker/api/types"
 
-	"github.com/simiotics/simplex/builds"
 	"github.com/simiotics/simplex/components"
 	"github.com/simiotics/simplex/executions"
 	"github.com/simiotics/simplex/flows"
@@ -63,7 +62,7 @@ func TestSingleComponent(t *testing.T) {
 	dockerClient := generateDockerClient()
 	ctx := context.Background()
 
-	build, err := builds.CreateBuild(ctx, db, dockerClient, ioutil.Discard, component.ID)
+	build, err := components.CreateBuild(ctx, db, dockerClient, ioutil.Discard, component.ID)
 	if err != nil {
 		t.Fatalf("Error building image for component: %s", err.Error())
 	}

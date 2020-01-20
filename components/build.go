@@ -1,4 +1,4 @@
-package builds
+package components
 
 import (
 	"archive/tar"
@@ -15,8 +15,6 @@ import (
 
 	dockerTypes "github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
-
-	"github.com/simiotics/simplex/components"
 )
 
 // DockerImagePrefix is the prefix that simplex attaches to each docker image name
@@ -46,7 +44,7 @@ func GenerateBuildMetadata(componentID string) (BuildMetadata, error) {
 
 // CreateBuild creates a new build for the component with the given componentID
 func CreateBuild(ctx context.Context, db *sql.DB, dockerClient *docker.Client, outstream io.Writer, componentID string) (BuildMetadata, error) {
-	componentMetadata, err := components.SelectComponentByID(db, componentID)
+	componentMetadata, err := SelectComponentByID(db, componentID)
 	if err != nil {
 		return BuildMetadata{}, err
 	}
@@ -62,7 +60,7 @@ func CreateBuild(ctx context.Context, db *sql.DB, dockerClient *docker.Client, o
 	}
 	defer specFile.Close()
 
-	specification, err := components.ReadSingleSpecification(specFile)
+	specification, err := ReadSingleSpecification(specFile)
 	if err != nil {
 		return buildMetadata, fmt.Errorf("Could not parse specification from specification file (%s): %s", componentMetadata.SpecificationPath, err.Error())
 	}

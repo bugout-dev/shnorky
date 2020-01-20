@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/simiotics/simplex/builds"
+	"github.com/simiotics/simplex/components"
 	"github.com/simiotics/simplex/state"
 )
 
@@ -38,13 +38,13 @@ func TestInsertExecution(t *testing.T) {
 	}
 	defer db.Close()
 
-	build := builds.BuildMetadata{
+	build := components.BuildMetadata{
 		ID:          "simplex/good:latest",
 		ComponentID: "some-component",
 		CreatedAt:   time.Now(),
 	}
 
-	builds.InsertBuild(db, build)
+	components.InsertBuild(db, build)
 
 	tests := []InsertExecutionTest{
 		{
