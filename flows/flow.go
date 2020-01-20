@@ -100,6 +100,8 @@ func Build(ctx context.Context, db *sql.DB, dockerClient *docker.Client, outstre
 		if err != nil {
 			return componentBuilds, err
 		}
+
+		componentBuilds[component] = buildMetadata
 	}
 
 	return componentBuilds, nil
@@ -139,7 +141,8 @@ func Execute(
 	for _, stage := range stages {
 		stepExecutions := map[string]executions.ExecutionMetadata{}
 		for _, step := range stage {
-			executionMetadata, err := executions.Execute(ctx, db, dockerClient, buildsMetadata[step].ID, flowID, mounts[step])
+			stepComponent := specification.Steps[step]
+			executionMetadata, err := executions.Execute(ctx, db, dockerClient, buildsMetadata[stepComponent].ID, flowID, mounts[step])
 			if err != nil {
 				return componentExecutions, err
 			}
