@@ -258,3 +258,5 @@ tags
 
 # Prevent accidental commits of the simplex binary
 simplex
+
+.vscode/
