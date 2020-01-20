@@ -96,6 +96,93 @@ func TestCalculateStages(t *testing.T) {
 			},
 			expectedError: nil,
 		},
+		{
+			specification: FlowSpecification{
+				Steps: map[string]string{
+					"a": "component-a",
+					"b": "component-b",
+					"c": "component-c",
+					"d": "component-d",
+					"e": "component-e",
+					"f": "component-f",
+					"g": "component-g",
+				},
+				Dependencies: map[string][]string{
+					"f": {"a", "b", "c"},
+					"g": {"a", "b", "c", "d", "e"},
+				},
+			},
+			expectedStages: [][]string{
+				{"a", "b", "c", "d", "e"},
+				{"f", "g"},
+			},
+			expectedError: nil,
+		},
+		{
+			specification: FlowSpecification{
+				Steps: map[string]string{
+					"a": "component-a",
+					"b": "component-b",
+					"c": "component-c",
+					"d": "component-d",
+					"e": "component-e",
+					"f": "component-f",
+					"g": "component-g",
+					"h": "component-h",
+					"i": "component-i",
+				},
+				Dependencies: map[string][]string{
+					"f": {"a", "b", "c"},
+					"g": {"a", "b", "c", "d", "e"},
+					"h": {"f", "g"},
+				},
+			},
+			expectedStages: [][]string{
+				{"a", "b", "c", "d", "e", "i"},
+				{"f", "g"},
+				{"h"},
+			},
+			expectedError: nil,
+		},
+		{
+			specification: FlowSpecification{
+				Steps: map[string]string{
+					"a": "component-a",
+					"b": "component-b",
+					"c": "component-c",
+					"d": "component-d",
+				},
+				Dependencies: map[string][]string{
+					"b": {"a"},
+					"c": {"a"},
+					"d": {"b", "c"},
+				},
+			},
+			expectedStages: [][]string{
+				{"a"},
+				{"b", "c"},
+				{"d"},
+			},
+			expectedError: nil,
+		},
+		{
+			specification: FlowSpecification{
+				Steps: map[string]string{
+					"a": "component-a",
+					"b": "component-b",
+					"c": "component-c",
+					"d": "component-d",
+				},
+				Dependencies: map[string][]string{
+					"b": {"a"},
+					"c": {"b"},
+					"d": {"c"},
+					"a": {"d"},
+				},
+			},
+			expectedStages: [][]string{},
+			expectedError:  ErrCyclicDependency,
+		},
 	}
 
 	for i, testCase := range testCases {
@@ -104,7 +191,7 @@ func TestCalculateStages(t *testing.T) {
 			t.Errorf("[Test %d] Did not get expected error: expected=%v, actual=%v", i, testCase.expectedError, err)
 		}
 		if len(stages) != len(testCase.expectedStages) {
-			t.Errorf("[Test %d] Calculated stages did not have expected length: expected=%d, actual=%d", i, len(testCase.expectedStages), len(stages))
+			t.Fatalf("[Test %d] Calculated stages did not have expected length: expected=%d, actual=%d", i, len(testCase.expectedStages), len(stages))
 		}
 		for j, stage := range stages {
 			if len(stage) != len(testCase.expectedStages[j]) {
