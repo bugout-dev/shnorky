@@ -11,6 +11,12 @@ import (
 // no rows
 var ErrComponentNotFound = errors.New("Could not find the specified component")
 
+// SQL statements used to manipulate component state
+var insertComponent = "INSERT INTO components (id, component_type, component_path, specification_path, created_at) VALUES(?, ?, ?, ?, ?);"
+var selectComponents = "SELECT * FROM components;"
+var selectComponentByID = "SELECT * FROM components WHERE id=?;"
+var deleteComponentByID = "DELETE FROM components WHERE id=?;"
+
 // InsertComponent creates a new row in the components table with the given component information.
 func InsertComponent(db *sql.DB, component ComponentMetadata) error {
 	tx, err := db.Begin()

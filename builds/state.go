@@ -11,6 +11,14 @@ import (
 // database returned no rows
 var ErrBuildNotFound = errors.New("Could not find the specified build")
 
+// SQL statements
+var insertBuild = "INSERT INTO builds (id, component_id, created_at) VALUES(?, ?, ?);"
+var selectBuilds = "SELECT * FROM builds;"
+var selectBuildByID = "SELECT * FROM builds WHERE id=?;"
+var selectBuildsByComponentID = "SELECT * FROM builds WHERE component_id=?;"
+var deleteBuildByID = "DELETE FROM builds WHERE id=?;"
+var deleteBuildsByComponentID = "DELETE FROM builds WHERE component_id=?"
+
 // InsertBuild inserts the build represented by the given build metadata into the given simplex
 // state database
 func InsertBuild(db *sql.DB, buildMetadata BuildMetadata) error {
