@@ -26,7 +26,7 @@ func TestReadSingleSpecification(t *testing.T) {
 		"cmd": ["echo", "hello", "world"],
 		"mountpoints": [
 			{
-				"mount_type": "bind",
+				"mount_type": "dir",
 				"mountpoint": "/opt/mounthere",
 				"read_only": false,
 				"required": true
@@ -75,7 +75,7 @@ func TestReadSingleSpecification(t *testing.T) {
 		"cmd": ["echo", "hello", "world"],
 		"mountpoints": [
 			{
-				"mount_type": "bind",
+				"mount_type": "dir",
 				"mountpoint": "/opt/mounthere",
 				"read_only": false,
 				"required": true
@@ -98,7 +98,7 @@ func TestReadSingleSpecification(t *testing.T) {
 		"cmd": ["echo", "hello", "world"],
 		"mountpoints": [
 			{
-				"mount_type": "bind",
+				"mount_type": "dir",
 				"mountpoint": "/opt/mounthere",
 				"read_only": false,
 				"required": true
@@ -121,7 +121,7 @@ func TestReadSingleSpecification(t *testing.T) {
 		"cmd": "bash",
 		"mountpoints": [
 			{
-				"mount_type": "bind",
+				"mount_type": "dir",
 				"mountpoint": "/opt/mounthere",
 				"read_only": false,
 				"required": true

@@ -114,7 +114,7 @@ func Execute(
 	dockerClient *docker.Client,
 	buildsMetadata map[string]components.BuildMetadata,
 	flowID string,
-	mounts map[string]map[string]string,
+	mounts map[string][]components.MountConfiguration,
 ) (map[string]components.ExecutionMetadata, error) {
 	flow, err := SelectFlowByID(db, flowID)
 	if err != nil {

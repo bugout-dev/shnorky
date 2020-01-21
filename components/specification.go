@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-
-	dockerMount "github.com/docker/docker/api/types/mount"
 )
+
+// ErrInvalidMountType signifies that there was an error parsing a component mount specification.
+// Specifically, that the MountType member did not have a valid value.
+var ErrInvalidMountType = errors.New("Invalid mount type in component mount specification: must be one of \"file\", \"dir\"")
 
 // ComponentSpecification - struct specifying how a component of a simplex data processing flow
 // should be built and executed
@@ -58,6 +60,16 @@ type RunSpecification struct {
 	User string `json:"user"`
 }
 
+// MountType is an enum representing the valid mount types for mount specifications
+type MountType int
+
+const (
+	// MountTypeFile - mount point is a file
+	MountTypeFile MountType = iota + 1
+	// MountTypeDir - mount point is a directory
+	MountTypeDir
+)
+
 // MountSpecification - specifies a mount point within a simplex component, how it should be mounted
 // on the container side, and whether or not it is required to be mounted at runtime
 // TODO(nkashy1): It does not make sense to specify this kind of mount type in the
@@ -73,17 +85,12 @@ type MountSpecification struct {
 	Required   bool   `json:"required"`
 }
 
-// ValidMountTypes defines the values for the "run.mountpoints[].mount_type" fields which are
-// understood by the component specification parser
-var ValidMountTypes = map[string]dockerMount.Type{
-	"bind":   dockerMount.TypeBind,
-	"volume": dockerMount.TypeVolume,
-	"tmpfs":  dockerMount.TypeTmpfs,
+// ValidMountTypes is a map whose keys are the valid values for the Type member in a
+// MountSpecification. This is here to make it easier to create a MountSpecification JSON document.
+var ValidMountTypes = map[string]MountType{
+	"file": MountTypeFile,
+	"dir":  MountTypeDir,
 }
-
-// ErrInvalidMountType signifies that there was an error parsing a mount in a component run
-// specification. It indicates that the mount type specified for the mount is not a known value.
-var ErrInvalidMountType = errors.New("Invalid mount type in component specification: must be one of \"bind\", \"volume\", \"tmpfs\"")
 
 // ReadSingleSpecification reads a single ComponentSpecification JSON document and returns the
 // corresponding ComponentSpecification struct. It returns an error if there was an issue parsing
@@ -94,13 +101,15 @@ func ReadSingleSpecification(reader io.Reader) (ComponentSpecification, error) {
 
 	var specification ComponentSpecification
 	err := dec.Decode(&specification)
+	if err != nil {
+		return ComponentSpecification{}, err
+	}
 
-	// Check that mountpoints have valid mount_type fields
-	for _, mountpoint := range specification.Run.Mountpoints {
-		if _, ok := ValidMountTypes[mountpoint.MountType]; !ok {
+	for _, mountSpec := range specification.Run.Mountpoints {
+		if _, ok := ValidMountTypes[mountSpec.MountType]; !ok {
 			return specification, ErrInvalidMountType
 		}
 	}
 
-	return specification, err
+	return specification, nil
 }

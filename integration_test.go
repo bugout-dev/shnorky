@@ -93,23 +93,33 @@ func TestSingleComponent(t *testing.T) {
 		t.Fatalf("Expected tag (%s) was not registered against docker daemon", latestTag)
 	}
 
-	mounts := map[string]string{}
-	specFile, err := os.Open(specificationPath)
+	// Mount configuration. The values here come from different specification files in the examples
+	// directory. The values here should reflect the values there - the specification files are the
+	// major source of truth. The mount paths come from examples/single-task/component.json
+	inputFile, err := ioutil.TempFile("", "")
 	if err != nil {
-		t.Fatalf("Error opening specification file (%s): %s", specificationPath, err.Error())
+		t.Fatalf("Error creating temporary file to mount as flow input: %s", err.Error())
 	}
-	specification, err := components.ReadSingleSpecification(specFile)
+	inputFile.Close()
+	defer os.Remove(inputFile.Name())
+
+	outputFile, err := ioutil.TempFile("", "")
 	if err != nil {
-		t.Fatalf("Error parsing specification (%s): %s", specificationPath, err.Error())
+		t.Fatalf("Error creating temporary file to mount as flow output: %s", err.Error())
 	}
-	for _, mountpoint := range specification.Run.Mountpoints {
-		sourceFile, err := ioutil.TempFile("", "")
-		sourceFile.Close()
-		if err != nil {
-			t.Fatalf("Error creating temporary file to mount onto container path %s: %s", mountpoint.Mountpoint, err.Error())
-		}
-		mounts[sourceFile.Name()] = mountpoint.Mountpoint
-		defer os.Remove(sourceFile.Name())
+	defer os.Remove(outputFile.Name())
+
+	mounts := []components.MountConfiguration{
+		{
+			Source: inputFile.Name(),
+			Target: "/simplex/inputs/inputs.txt",
+			Method: "bind",
+		},
+		{
+			Source: outputFile.Name(),
+			Target: "/simplex/outputs/outputs.txt",
+			Method: "bind",
+		},
 	}
 
 	execution, err := components.Execute(ctx, db, dockerClient, build.ID, "", mounts)
@@ -125,22 +135,18 @@ func TestSingleComponent(t *testing.T) {
 	}
 	defer dockerClient.ContainerRemove(ctx, execution.ID, dockerTypes.ContainerRemoveOptions{})
 
-	inverseMounts := map[string]string{}
-	for source, target := range mounts {
-		inverseMounts[target] = source
-	}
-	outfile, err := os.Open(inverseMounts["/simplex/outputs/outputs.txt"])
-	if err != nil {
-		t.Fatalf("Could not open output file (%s): %s", inverseMounts["/simplex/outputs/outputs.txt"], err.Error())
-	}
-	defer outfile.Close()
-	scanner := bufio.NewScanner(outfile)
+	scanner := bufio.NewScanner(outputFile)
+	defer outputFile.Close()
 	more := scanner.Scan()
 	if !more {
 		t.Fatal("Not enough lines in output file")
 	}
 	line := scanner.Text()
-	expectedLine := specification.Run.Env["MY_ENV"]
+
+	// expectedLine is the value for the MY_ENV variable in the component specification in:
+	// examples/single-task/component.json
+	expectedLine := "hello world"
+
 	if line != expectedLine {
 		t.Fatalf("Incorrect value in output file: expected=\"%s\", actual=\"%s\"", expectedLine, line)
 	}
@@ -280,14 +286,30 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 	}
 	defer os.Remove(outputFile.Name())
 
-	stepMounts := map[string]map[string]string{
-		"first": map[string]string{
-			inputFile.Name():        "/simplex/inputs/inputs.txt",
-			intermediateFile.Name(): "/simplex/outputs/outputs.txt",
+	stepMounts := map[string][]components.MountConfiguration{
+		"first": {
+			{
+				Source: inputFile.Name(),
+				Target: "/simplex/inputs/inputs.txt",
+				Method: "bind",
+			},
+			{
+				Source: intermediateFile.Name(),
+				Target: "/simplex/outputs/outputs.txt",
+				Method: "bind",
+			},
 		},
-		"second": map[string]string{
-			intermediateFile.Name(): "/simplex/inputs/inputs.txt",
-			outputFile.Name():       "/simplex/outputs/outputs.txt",
+		"second": {
+			{
+				Source: intermediateFile.Name(),
+				Target: "/simplex/inputs/inputs.txt",
+				Method: "bind",
+			},
+			{
+				Source: outputFile.Name(),
+				Target: "/simplex/outputs/outputs.txt",
+				Method: "bind",
+			},
 		},
 	}
 
@@ -303,6 +325,7 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 	// examples/single-task/component.json
 	expectedLine := "hello world"
 	scanner := bufio.NewScanner(outputFile)
+	defer outputFile.Close()
 	more := scanner.Scan()
 	if !more {
 		t.Fatal("Not enough lines in output file")

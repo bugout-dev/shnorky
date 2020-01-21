@@ -56,11 +56,11 @@ func Execute(
 	dockerClient *docker.Client,
 	buildID string,
 	flowID string,
-	mounts map[string]string,
+	mounts []MountConfiguration,
 ) (ExecutionMetadata, error) {
-	inverseMounts := map[string]string{}
-	for source, target := range mounts {
-		inverseMounts[target] = source
+	inverseMounts := map[string]int{}
+	for i, mountConfig := range mounts {
+		inverseMounts[mountConfig.Target] = i
 	}
 
 	buildMetadata, err := SelectBuildByID(db, buildID)
@@ -127,7 +127,7 @@ func Execute(
 
 	currentMount := 0
 	for _, mountpoint := range specification.Run.Mountpoints {
-		source, ok := inverseMounts[mountpoint.Mountpoint]
+		mountsIndex, ok := inverseMounts[mountpoint.Mountpoint]
 		if mountpoint.Required && !ok {
 			return executionMetadata, fmt.Errorf("No mount provided for required mountpoint: %s", mountpoint.Mountpoint)
 		}
@@ -136,9 +136,11 @@ func Execute(
 			if currentMount > len(inverseMounts) {
 				return executionMetadata, errors.New("Too many mounts in host configuration")
 			}
+			mountMethod := ValidMountMethods[mounts[mountsIndex].Method]
+			mountSource := mounts[mountsIndex].Source
 			hostConfig.Mounts[currentMount] = dockerMount.Mount{
-				Type:   ValidMountTypes[mountpoint.MountType],
-				Source: source,
+				Type:   mountMethod,
+				Source: mountSource,
 				Target: mountpoint.Mountpoint,
 			}
 
