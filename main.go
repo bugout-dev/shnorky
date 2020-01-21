@@ -424,6 +424,7 @@ and build and execute flows).
 
 	buildFlowCommand.Flags().StringVarP(&id, "id", "i", "", "ID for the flow to build")
 
+	// TODO(nkashy1): Accept mounts
 	executeFlowCommand := &cobra.Command{
 		Use:   "execute",
 		Short: "Execute a simplex flow",
