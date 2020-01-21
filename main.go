@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/simiotics/simplex/components"
+	"github.com/simiotics/simplex/flows"
 	"github.com/simiotics/simplex/state"
 )
 
@@ -152,12 +153,12 @@ If you are using bash and want command completion for the simplex CLI, run (ommi
 		Long: `Interact with simplex components
 
 simplex components represent individual steps in a data processing flow. This command allows you
-to interact with your simplex components (add new components, inspect existing components, and
-remove unwanted components from your simplex state).
+to interact with your simplex components (add new components, inspect existing components, remove
+unwanted components from your simplex state, and build and execute components).
 `,
 	}
 
-	addComponentCommand := &cobra.Command{
+	createComponentCommand := &cobra.Command{
 		Use:   "create",
 		Short: "Add a component to simplex",
 		Long:  "Adds a new component to simplex and makes it available in the state database",
@@ -172,7 +173,7 @@ remove unwanted components from your simplex state).
 				},
 			)
 
-			logger.Debug("Opening state directory")
+			logger.Debug("Opening state database")
 			db := openStateDB(stateDir)
 			defer db.Close()
 
@@ -191,14 +192,14 @@ remove unwanted components from your simplex state).
 		},
 	}
 
-	addComponentCommand.Flags().StringVarP(&id, "id", "i", "", "ID for the component being added")
+	createComponentCommand.Flags().StringVarP(&id, "id", "i", "", "ID for the component being added")
 
 	componentTypesHelp := fmt.Sprintf("Type of component being added (one of: %s)", strings.Join([]string{components.Service, components.Task}, ","))
-	addComponentCommand.Flags().StringVarP(&componentType, "type", "t", "", componentTypesHelp)
+	createComponentCommand.Flags().StringVarP(&componentType, "type", "t", "", componentTypesHelp)
 
-	addComponentCommand.Flags().StringVarP(&componentPath, "component", "c", "", "Directory in which component is defined")
+	createComponentCommand.Flags().StringVarP(&componentPath, "component", "c", "", "Directory in which component is defined")
 
-	addComponentCommand.Flags().StringVarP(&specificationPath, "spec", "s", "", "Path to component specification")
+	createComponentCommand.Flags().StringVarP(&specificationPath, "spec", "s", "", "Path to component specification")
 
 	listComponentsCommand := &cobra.Command{
 		Use:   "list",
@@ -254,21 +255,8 @@ remove unwanted components from your simplex state).
 
 	removeComponentCommand.Flags().StringVarP(&id, "id", "i", "", "ID for the component being removed")
 
-	componentsCommand.AddCommand(addComponentCommand, listComponentsCommand, removeComponentCommand)
-
-	// simplex builds
-	buildsCommand := &cobra.Command{
-		Use:   "builds",
-		Short: "Interact with simplex builds",
-		Long: `Interact with simplex builds
-
-simplex builds are images that can be used to execute simplex components inside containers. A build
-derives from a component.
-`,
-	}
-
 	createBuildCommand := &cobra.Command{
-		Use:   "create",
+		Use:   "build",
 		Short: "Create a build for a specific component",
 		Long:  "Creates an image for the specified component using its current state on the filesystem",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -279,17 +267,18 @@ derives from a component.
 
 			ctx := context.Background()
 
-			_, err := components.CreateBuild(ctx, db, dockerClient, os.Stdout, id)
+			buildMetadata, err := components.CreateBuild(ctx, db, dockerClient, os.Stdout, id)
 			if err != nil {
 				log.WithField("error", err).Fatal("Could not create build")
 			}
+			fmt.Println("Build succeeded:", buildMetadata.ID)
 		},
 	}
 
-	createBuildCommand.Flags().StringVarP(&id, "component", "c", "", "ID of the component for which build is being created")
+	createBuildCommand.Flags().StringVarP(&id, "id", "i", "", "ID of the component for which build is being created")
 
 	listBuildsCommand := &cobra.Command{
-		Use:   "list",
+		Use:   "list-builds",
 		Short: "List builds registered against the state database",
 		Long:  "Lists builds that have previously been added to the state database (allows listing by component ID)",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -326,25 +315,11 @@ derives from a component.
 		},
 	}
 
-	listBuildsCommand.Flags().StringVarP(&id, "component", "c", "", "ID of the component for which builds are being created (optional; if not set, lists all builds)")
-
-	buildsCommand.AddCommand(createBuildCommand, listBuildsCommand)
-
-	// simplex executions
-	executionsCommand := &cobra.Command{
-		Use:   "executions",
-		Short: "Interact with simplex executions",
-		Long: `Interact with simplex executions
-
-simplex executions are tasks or services created run from simplex components. Each execution is
-associated with a single build, and any configuration it requires is specified in the component
-that the build represents.
-`,
-	}
+	listBuildsCommand.Flags().StringVarP(&id, "id", "i", "", "ID of the component for which builds are being listed (optional; if not set, lists all builds)")
 
 	// TODO(nkashy1): Accept mounts from command line (as a JSON string?)
 	createExecutionCommand := &cobra.Command{
-		Use:   "create",
+		Use:   "execute",
 		Short: "Execute a build for a specific component",
 		Long:  "Creates a container for the given build and registers the container in the state database",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -366,9 +341,113 @@ that the build represents.
 
 	createExecutionCommand.Flags().StringVarP(&id, "build", "b", "", "ID of the build being executed")
 
-	executionsCommand.AddCommand(createExecutionCommand)
+	componentsCommand.AddCommand(
+		createComponentCommand,
+		listComponentsCommand,
+		removeComponentCommand,
+		createBuildCommand,
+		listBuildsCommand,
+		createExecutionCommand,
+	)
 
-	simplexCommand.AddCommand(versionCommand, completionCommand, stateCommand, componentsCommand, buildsCommand, executionsCommand)
+	// simplex flows
+	flowsCommand := &cobra.Command{
+		Use:   "flows",
+		Short: "Interact with simplex flows",
+		Long: `Interact with simplex flows
+
+simplex flows represent entire data processing flows. This command allows you to interact with your
+simplex flows (add new flows, inspect existing flows, remove unwanted flows from your simplex state,
+and build and execute flows).
+`,
+	}
+
+	createFlowCommand := &cobra.Command{
+		Use:   "create",
+		Short: "Add a flow to simplex",
+		Long:  "Adds a new flow to simplex and makes it available in the state database",
+		Run: func(cmd *cobra.Command, args []string) {
+			logger := log.WithFields(
+				logrus.Fields{
+					"id":                id,
+					"specificationPath": specificationPath,
+					"stateDir":          stateDir,
+				},
+			)
+
+			logger.Debug("Opening state database")
+			db := openStateDB(stateDir)
+			defer db.Close()
+
+			logger.Debug("Adding component to state database")
+			flow, err := flows.AddFlow(db, id, specificationPath)
+			if err != nil {
+				logger.WithField("error", err).Fatal("Failed to add flow")
+			}
+			logger.Info("Flow added successfully")
+
+			marshalledFlow, err := json.Marshal(flow)
+			if err != nil {
+				logger.Fatal("Failed to marshall added flow")
+			}
+			fmt.Println(string(marshalledFlow))
+		},
+	}
+
+	createFlowCommand.Flags().StringVarP(&id, "id", "i", "", "ID for the flow being added")
+
+	createFlowCommand.Flags().StringVarP(&specificationPath, "spec", "s", "", "Path to flow specification")
+
+	buildFlowCommand := &cobra.Command{
+		Use:   "build",
+		Short: "Build all components in a flow",
+		Long:  "Creates a build for each distinct component in the given flow",
+		Run: func(cmd *cobra.Command, args []string) {
+			db := openStateDB(stateDir)
+			defer db.Close()
+
+			dockerClient := generateDockerClient()
+
+			ctx := context.Background()
+
+			buildsMetadata, err := flows.Build(ctx, db, dockerClient, os.Stdout, id)
+			if err != nil {
+				log.WithField("error", err).Fatal("Could not build components")
+			}
+
+			fmt.Println("Builds:")
+			for component, buildMetadata := range buildsMetadata {
+				fmt.Printf("  - %s: %s\n", component, buildMetadata.ID)
+			}
+		},
+	}
+
+	buildFlowCommand.Flags().StringVarP(&id, "id", "i", "", "ID for the flow to build")
+
+	executeFlowCommand := &cobra.Command{
+		Use:   "execute",
+		Short: "Execute a simplex flow",
+		Long:  "Executes a simplex flow",
+		Run: func(cmd *cobra.Command, args []string) {
+			db := openStateDB(stateDir)
+			defer db.Close()
+
+			dockerClient := generateDockerClient()
+
+			ctx := context.Background()
+
+			executionMetadata, err := components.Execute(ctx, db, dockerClient, id, "", nil)
+			if err != nil {
+				log.WithField("error", err).Fatal("Could not execute build")
+			}
+
+			fmt.Println(executionMetadata.ID)
+		},
+	}
+
+	flowsCommand.AddCommand(createFlowCommand, buildFlowCommand, executeFlowCommand)
+
+	simplexCommand.AddCommand(versionCommand, completionCommand, stateCommand, componentsCommand, flowsCommand)
 
 	err = simplexCommand.Execute()
 	if err != nil {
