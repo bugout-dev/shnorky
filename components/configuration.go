@@ -30,19 +30,23 @@ var ValidMountMethods = map[string]dockerMount.Type{
 // validates it, and returns it as a MountConfiguration struct. Returns error (in the error
 // position) if the MountConfiguration document is invalid or if there is an error reading it from
 // the reader.
-func ReadMountConfiguration(reader io.Reader) (MountConfiguration, error) {
+func ReadMountConfiguration(reader io.Reader) ([]MountConfiguration, error) {
 	dec := json.NewDecoder(reader)
 	dec.DisallowUnknownFields()
 
-	var mountConfiguration MountConfiguration
-	err := dec.Decode(&mountConfiguration)
+	var mountConfigurations []MountConfiguration
+	err := dec.Decode(&mountConfigurations)
 	if err != nil {
-		return MountConfiguration{}, err
+		return []MountConfiguration{}, err
 	}
 
-	if _, ok := ValidMountMethods[mountConfiguration.Method]; !ok {
-		return mountConfiguration, ErrInvalidMountMethod
+	// TODO(nkashy1): Factor this validation out into a separate function so that it can be reused
+	// in the flows package equivalent to this function.
+	for _, mountConfiguration := range mountConfigurations {
+		if _, ok := ValidMountMethods[mountConfiguration.Method]; !ok {
+			return mountConfigurations, ErrInvalidMountMethod
+		}
 	}
 
-	return mountConfiguration, nil
+	return mountConfigurations, nil
 }

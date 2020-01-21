@@ -461,6 +461,60 @@ func TestSelectBuildByID(t *testing.T) {
 	}
 }
 
+// TestSelectMostRecentBuildForComponent first runs InsertBuild a number of times to load a
+// temporary state database with some builds. Then it tests that it can retrieve the most recent
+// build.
+func TestSelectMostRecentBuildForComponent(t *testing.T) {
+	stateDir, err := ioutil.TempDir("", "simplex-select-build-by-id-tests-")
+	if err != nil {
+		t.Fatalf("Could not create temporary directory: %s", err.Error())
+	}
+	os.RemoveAll(stateDir)
+
+	err = state.Init(stateDir)
+	if err != nil {
+		t.Fatalf("Error creating state directory: %s", err.Error())
+	}
+	defer os.RemoveAll(stateDir)
+
+	stateDBPath := path.Join(stateDir, state.DBFileName)
+	db, err := sql.Open("sqlite3", stateDBPath)
+	if err != nil {
+		t.Fatal("Error opening state database file")
+	}
+	defer db.Close()
+
+	var i int
+	builds := make([]BuildMetadata, 10)
+	for i = 0; i < 3; i++ {
+		build, err := GenerateBuildMetadata("test-component")
+		if err != nil {
+			t.Fatalf("[Build %d] Error creating build metadata: %s", i, err.Error())
+		}
+		builds[i] = build
+		err = InsertBuild(db, build)
+		if err != nil {
+			t.Fatalf("[Build %d] Error inserting build into state database: %s", i, err.Error())
+		}
+		time.Sleep(time.Second)
+	}
+
+	stateBuild, err := SelectMostRecentBuildForComponent(db, "test-component")
+	if err != nil {
+		t.Fatalf("Received error when trying to get inserted build: %s", err.Error())
+	}
+	if stateBuild.ID != builds[2].ID {
+		t.Fatalf("Unexpected ID retrieved from state database: expected=%s, actual=%s", builds[2].ID, stateBuild.ID)
+	}
+	if stateBuild.ComponentID != builds[2].ComponentID {
+		t.Fatalf("Unexpected ComponentID retrieved from state database: expected=%s, actual=%s", builds[2].ComponentID, stateBuild.ComponentID)
+	}
+	expectedCreatedAt := time.Unix(builds[2].CreatedAt.Unix(), 0)
+	if stateBuild.CreatedAt != expectedCreatedAt {
+		t.Fatalf("Unexpected CreatedAt retrieved from state database: expected=%s, actual=%s", expectedCreatedAt, stateBuild.CreatedAt)
+	}
+}
+
 // TestInsertExecution tests that execution insertion works as expected
 func TestInsertExecution(t *testing.T) {
 	type InsertExecutionTest struct {

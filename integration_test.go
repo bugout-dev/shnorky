@@ -313,7 +313,7 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 		},
 	}
 
-	flowExecutions, err := flows.Execute(ctx, db, dockerClient, flowBuilds, flow.ID, stepMounts)
+	flowExecutions, err := flows.Execute(ctx, db, dockerClient, flow.ID, stepMounts)
 	for _, stepExecution := range flowExecutions {
 		defer dockerClient.ContainerRemove(ctx, stepExecution.ID, dockerTypes.ContainerRemoveOptions{})
 	}

@@ -50,6 +50,9 @@ func GenerateExecutionMetadata(build BuildMetadata, flowID string) (ExecutionMet
 }
 
 // Execute runs a container corresponding to the given build of the given component.
+// TODO(nkashy1): Maybe take build metadata instead of build ID? This will reduce the number of
+// database lookups that happen in flow execution.
+// TODO(nkashy1): Remove flowID argument. Flow executions are handled separately in flows package.
 func Execute(
 	ctx context.Context,
 	db *sql.DB,
@@ -151,6 +154,11 @@ func Execute(
 	response, err := dockerClient.ContainerCreate(ctx, containerConfig, hostConfig, nil, executionMetadata.ID)
 	if err != nil {
 		return executionMetadata, fmt.Errorf("Error creating container for build (%s): %s", buildMetadata.ID, err.Error())
+	}
+
+	err = InsertExecution(db, executionMetadata)
+	if err != nil {
+		return executionMetadata, fmt.Errorf("Error inserting execution into state database: %s", err.Error())
 	}
 
 	err = dockerClient.ContainerStart(ctx, response.ID, dockerTypes.ContainerStartOptions{})

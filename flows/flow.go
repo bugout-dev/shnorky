@@ -112,7 +112,6 @@ func Execute(
 	ctx context.Context,
 	db *sql.DB,
 	dockerClient *docker.Client,
-	buildsMetadata map[string]components.BuildMetadata,
 	flowID string,
 	mounts map[string][]components.MountConfiguration,
 ) (map[string]components.ExecutionMetadata, error) {
@@ -131,6 +130,16 @@ func Execute(
 		return map[string]components.ExecutionMetadata{}, err
 	}
 
+	// buildIDs maps steps to build IDs
+	buildIDs := map[string]string{}
+	for step, componentID := range specification.Steps {
+		buildID, err := components.SelectMostRecentBuildForComponent(db, componentID)
+		if err != nil {
+			return map[string]components.ExecutionMetadata{}, err
+		}
+		buildIDs[step] = buildID.ID
+	}
+
 	stages, err := CalculateStages(specification)
 	if err != nil {
 		return map[string]components.ExecutionMetadata{}, err
@@ -140,8 +149,7 @@ func Execute(
 	for _, stage := range stages {
 		stepExecutions := map[string]components.ExecutionMetadata{}
 		for _, step := range stage {
-			stepComponent := specification.Steps[step]
-			executionMetadata, err := components.Execute(ctx, db, dockerClient, buildsMetadata[stepComponent].ID, flowID, mounts[step])
+			executionMetadata, err := components.Execute(ctx, db, dockerClient, buildIDs[step], flowID, mounts[step])
 			if err != nil {
 				return componentExecutions, err
 			}

@@ -24,6 +24,7 @@ var insertBuild = "INSERT INTO builds (id, component_id, created_at) VALUES(?, ?
 var selectBuilds = "SELECT * FROM builds;"
 var selectBuildByID = "SELECT * FROM builds WHERE id=?;"
 var selectBuildsByComponentID = "SELECT * FROM builds WHERE component_id=?;"
+var selectMostRecentBuildForComponent = "SELECT * FROM builds WHERE component_id=? ORDER BY created_at DESC LIMIT 1;"
 var deleteBuildByID = "DELETE FROM builds WHERE id=?;"
 var deleteBuildsByComponentID = "DELETE FROM builds WHERE component_id=?"
 var insertExecutionWithNoFlowID = "INSERT INTO executions (id, build_id, component_id, created_at) VALUES(?, ?, ?, ?);"
@@ -138,6 +139,25 @@ func SelectBuildByID(db *sql.DB, id string) (BuildMetadata, error) {
 		return BuildMetadata{}, fmt.Errorf("Result had unexpected row ID: expected=%s, actual=%s", id, rowID)
 	}
 	return BuildMetadata{ID: rowID, ComponentID: componentID, CreatedAt: time.Unix(createdAt, 0)}, nil
+}
+
+// SelectMostRecentBuildForComponent gets build metadata from the given state database for the most
+// recent build for the component with the given componentID
+func SelectMostRecentBuildForComponent(db *sql.DB, componentID string) (BuildMetadata, error) {
+	var id, rowComponentID string
+	var createdAt int64
+	row := db.QueryRow(selectMostRecentBuildForComponent, componentID)
+	err := row.Scan(&id, &rowComponentID, &createdAt)
+	if err == sql.ErrNoRows {
+		return BuildMetadata{}, ErrBuildNotFound
+	}
+	if err != nil {
+		return BuildMetadata{}, err
+	}
+	if rowComponentID != componentID {
+		return BuildMetadata{}, fmt.Errorf("Result had unexpected component ID: expected=%s, actual=%s", componentID, rowComponentID)
+	}
+	return BuildMetadata{ID: id, ComponentID: rowComponentID, CreatedAt: time.Unix(createdAt, 0)}, nil
 }
 
 // InsertExecution inserts an execution row into the state database

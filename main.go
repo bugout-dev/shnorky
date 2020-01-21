@@ -81,7 +81,7 @@ func main() {
 		defaultStateDir = path.Join(currentUser.HomeDir, defaultStateDir)
 	}
 
-	var id, componentType, componentPath, specificationPath, stateDir string
+	var id, componentType, componentPath, specificationPath, stateDir, mountConfig string
 
 	simplexCommand := &cobra.Command{
 		Use:              "simplex",
@@ -317,7 +317,6 @@ unwanted components from your simplex state, and build and execute components).
 
 	listBuildsCommand.Flags().StringVarP(&id, "id", "i", "", "ID of the component for which builds are being listed (optional; if not set, lists all builds)")
 
-	// TODO(nkashy1): Accept mounts from command line (as a JSON string?)
 	createExecutionCommand := &cobra.Command{
 		Use:   "execute",
 		Short: "Execute a build for a specific component",
@@ -330,7 +329,12 @@ unwanted components from your simplex state, and build and execute components).
 
 			ctx := context.Background()
 
-			executionMetadata, err := components.Execute(ctx, db, dockerClient, id, "", nil)
+			mounts, err := components.ReadMountConfiguration(strings.NewReader(mountConfig))
+			if err != nil {
+				log.WithField("error", err).Fatal("Error reading mount configuration")
+			}
+
+			executionMetadata, err := components.Execute(ctx, db, dockerClient, id, "", mounts)
 			if err != nil {
 				log.WithField("error", err).Fatal("Could not execute build")
 			}
@@ -340,6 +344,7 @@ unwanted components from your simplex state, and build and execute components).
 	}
 
 	createExecutionCommand.Flags().StringVarP(&id, "build", "b", "", "ID of the build being executed")
+	createExecutionCommand.Flags().StringVarP(&mountConfig, "mounts", "m", "", "JSON string specifying mount configuration for execution")
 
 	componentsCommand.AddCommand(
 		createComponentCommand,
@@ -437,12 +442,17 @@ and build and execute flows).
 
 			ctx := context.Background()
 
-			executionMetadata, err := components.Execute(ctx, db, dockerClient, id, "", nil)
+			mounts, err := flows.ReadMountConfiguration(strings.NewReader(mountConfig))
 			if err != nil {
-				log.WithField("error", err).Fatal("Could not execute build")
+				log.WithField("error", err).Fatal("Error reading mount configuration")
 			}
 
-			fmt.Println(executionMetadata.ID)
+			executions, err := flows.Execute(ctx, db, dockerClient, id, mounts)
+			if err != nil {
+				log.WithField("error", err).Fatal("Could not execute flow")
+			}
+
+			fmt.Println(executions)
 		},
 	}
 
