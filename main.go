@@ -429,7 +429,6 @@ and build and execute flows).
 
 	buildFlowCommand.Flags().StringVarP(&id, "id", "i", "", "ID for the flow to build")
 
-	// TODO(nkashy1): Accept mounts
 	executeFlowCommand := &cobra.Command{
 		Use:   "execute",
 		Short: "Execute a simplex flow",
@@ -455,6 +454,9 @@ and build and execute flows).
 			fmt.Println(executions)
 		},
 	}
+
+	executeFlowCommand.Flags().StringVarP(&id, "id", "i", "", "ID of the flow being executed")
+	executeFlowCommand.Flags().StringVarP(&mountConfig, "mounts", "m", "", "JSON string specifying mount configuration for flow")
 
 	flowsCommand.AddCommand(createFlowCommand, buildFlowCommand, executeFlowCommand)
 
