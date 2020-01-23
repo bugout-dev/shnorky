@@ -57,6 +57,52 @@ Test again:
 simplex -h
 ```
 
+## Usage
+
+These usage examples use the example flows and components in the [`examples`](./examples) directory.
+
+### Initialize state database
+
+First, determine where you would like to put the Simplex state directory - which should not already
+exist before you run the initialization command. Then:
+
+```
+simplex -S <PATH TO STATE DIRECTORY> state init
+```
+
+### Register a component
+
+```
+simplex -S <PATH TO STATE DIRECTORY> components create -c examples/components/single-task -i single-task -t task
+```
+
+### Register a flow
+
+```
+simplex -S <PATH TO STATE DIRECTORY> flows create -i single-task-twice -s examples/flows/single-task-twice.json
+```
+
+### Build images for all components in a flow
+
+```
+simplex -S <PATH TO STATE DIRECTORY> flows build -i single-task-twice
+```
+
+### Execute a flow
+
+The sample flow requires three files to exist (`inputs.txt`, `intermediate.txt`, and `outputs.txt`).
+Create these files:
+```
+touch inputs.txt intermediate.txt outputs.txt
+```
+
+Then, run the flow:
+```
+simplex -S <PATH TO STATE DIRECTORY> flows execute \
+    -m "{\"first\": [{\"source\": \"$PWD/inputs.txt\", \"target\": \"/simplex/inputs/inputs.txt\", \"method\": \"bind\"}, {\"source\": \"$PWD/intermediate.txt\", \"target\": \"/simplex/outputs/outputs.txt\", \"method\": \"bind\"}], \"second\": [{\"source\": \"$PWD/intermediate.txt\", \"target\": \"/simplex/inputs/inputs.txt\", \"method\": \"bind\"}, {\"source\": \"$PWD/outputs.txt\", \"target\": \"/simplex/outputs/outputs.txt\", \"method\": \"bind\"}]}" \
+    -i single-task-twice
+```
+
 ## Rationale
 
 Data science begins with data processing. Data processing, in the absence of scale, is not Cool. It
@@ -96,3 +142,7 @@ to run them using Simplex. Our [`examples/`](./examples) directory has samples y
 
 Simplex is inspired by [`docker-compose`](https://github.com/docker/compose). It extends the
 functionality of `docker-compose` to cover dependencies for data processing tasks.
+
+## Help
+
+For help, email engineering@simiotics.com
