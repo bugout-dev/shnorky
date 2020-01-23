@@ -9,6 +9,40 @@ Simplex is a workflow orchestrator which:
 3. Targets data processing flows
 
 
+## Requirements
+
++ [`docker`](https://docs.docker.com/install/) - Simplex uses docker to run workflow components
+
+## Installation
+
+### From source
+
+#### Requirements
+
++ [go](https://golang.org/) - go.1.13.0 or greater
+
++ [gcc](https://gcc.gnu.org/) - known to work with gcc 5.4.0 and greater
+
++ [GNU Make](https://www.gnu.org/software/make/) - known to work with make 4.1
+
+#### Steps
+
+Clone this repository:
+```
+git clone https://github.com/simiotics/simplex.git
+```
+
+Move into the cloned directory:
+```
+cd simplex
+```
+
+Make the `simplex` binary:
+```
+make build
+```
+
+
 ## Rationale
 
 Data science begins with data processing. Data processing, in the absence of scale, is not Cool. It
