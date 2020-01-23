@@ -71,7 +71,7 @@ flycheck_*.el
 # vendor/
 
 ### Go Patch ###
-/vendor/
+#/vendor/
 /Godeps/
 
 ### Linux ###
