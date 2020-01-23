@@ -38,8 +38,8 @@ func TestSingleComponent(t *testing.T) {
 	defer db.Close()
 
 	componentID := "test-component"
-	componentPath := "examples/single-task"
-	specificationPath := "examples/single-task/component.json"
+	componentPath := "examples/components/single-task"
+	specificationPath := "examples/components/single-task/component.json"
 	component, err := components.AddComponent(db, componentID, components.Task, componentPath, specificationPath)
 	if err != nil {
 		t.Fatalf("Error registering component: %s", err.Error())
@@ -95,7 +95,7 @@ func TestSingleComponent(t *testing.T) {
 
 	// Mount configuration. The values here come from different specification files in the examples
 	// directory. The values here should reflect the values there - the specification files are the
-	// major source of truth. The mount paths come from examples/single-task/component.json
+	// major source of truth. The mount paths come from examples/components/single-task/component.json
 	inputFile, err := ioutil.TempFile("", "")
 	if err != nil {
 		t.Fatalf("Error creating temporary file to mount as flow input: %s", err.Error())
@@ -144,7 +144,7 @@ func TestSingleComponent(t *testing.T) {
 	line := scanner.Text()
 
 	// expectedLine is the value for the MY_ENV variable in the component specification in:
-	// examples/single-task/component.json
+	// examples/components/single-task/component.json
 	expectedLine := "hello world"
 
 	if line != expectedLine {
@@ -188,8 +188,8 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 	defer db.Close()
 
 	componentID := "single-task"
-	componentPath := "examples/single-task"
-	specificationPath := "examples/single-task/component.json"
+	componentPath := "examples/components/single-task"
+	specificationPath := "examples/components/single-task/component.json"
 	component, err := components.AddComponent(db, componentID, components.Task, componentPath, specificationPath)
 	if err != nil {
 		t.Fatalf("Error registering component: %s", err.Error())
@@ -265,7 +265,7 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 	// directory. The values here should reflect the values there - the specification files are the
 	// major source of truth:
 	// 1. Step names come from examples/flows/single-task-twice.json
-	// 2. Component mount paths come from examples/single-task/component.json
+	// 2. Component mount paths come from examples/components/single-task/component.json
 	inputFile, err := ioutil.TempFile("", "")
 	if err != nil {
 		t.Fatalf("Error creating temporary file to mount as flow input: %s", err.Error())
@@ -322,7 +322,7 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 	}
 
 	// expectedLine is the value for the MY_ENV variable in the component specification in:
-	// examples/single-task/component.json
+	// examples/components/single-task/component.json
 	expectedLine := "hello world"
 	scanner := bufio.NewScanner(outputFile)
 	defer outputFile.Close()
