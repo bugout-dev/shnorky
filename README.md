@@ -42,6 +42,20 @@ Make the `simplex` binary:
 make build
 ```
 
+This will create a `simplex` binary in that directory, which you can test:
+```
+./simplex -h
+```
+
+To make this binary available globally, run:
+```
+sudo mv ./simplex /usr/local/bin/
+```
+
+Test again:
+```
+simplex -h
+```
 
 ## Rationale
 
