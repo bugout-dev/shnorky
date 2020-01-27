@@ -15,6 +15,21 @@ Shnorky is a workflow orchestrator which:
 
 ## Installation
 
+### go get
+
+#### Requirements
+
++ [go](https://golang.org/) - go.1.13.0 or greater
+
+#### Steps
+
+If you have `go` installed on your computer, you can get Shnorky using `go get`:
+```
+go get github.com/simiotics/shnorky
+```
+
+This will put the `shnorky` binary in your `\`go env GOPATH\`/bin` directory.
+
 ### From source
 
 #### Requirements
