@@ -8,9 +8,11 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 	"testing"
 
 	dockerTypes "github.com/docker/docker/api/types"
+	dockerContainer "github.com/docker/docker/api/types/container"
 
 	"github.com/simiotics/shnorky/components"
 	"github.com/simiotics/shnorky/flows"
@@ -126,12 +128,46 @@ func TestSingleComponent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error executing build (%s): %s", build.ID, err.Error())
 	}
-	exitCode, err := dockerClient.ContainerWait(ctx, execution.ID)
+
+	doneChan := make(chan bool)
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func(exitChan <-chan bool) {
+		defer wg.Done()
+		waitOKBodyChannel, errChannel := dockerClient.ContainerWait(ctx, execution.ID, dockerContainer.WaitConditionNotRunning)
+		select {
+		case waitErr := <-errChannel:
+			if waitErr != nil {
+				t.Fatalf("Error waiting for container (ID: %s) to exit: %s", execution.ID, waitErr.Error())
+			} else {
+				waitOKBody := <-waitOKBodyChannel
+				if waitOKBody.StatusCode != 0 {
+					t.Fatalf("Received non-zero exit code (%d) from container (ID: %s)", waitOKBody.StatusCode, execution.ID)
+				}
+			}
+			doneChan <- true
+		case <-exitChan:
+			return
+		}
+	}(doneChan)
+
+	info, err := dockerClient.ContainerInspect(ctx, execution.ID)
 	if err != nil {
-		t.Fatalf("Error waiting for container (ID: %s) to exit: %s", execution.ID, err.Error())
+		t.Fatalf("Error insepcting container (%s): %s", execution.ID, err.Error())
 	}
-	if exitCode != 0 {
-		t.Fatalf("Received non-zero exit code (%d) from container (ID: %s)", exitCode, execution.ID)
+	if !info.State.Running {
+		doneChan <- true
+	}
+
+	wg.Wait()
+
+	info, err = dockerClient.ContainerInspect(ctx, execution.ID)
+	if err != nil {
+		t.Fatalf("Error insepcting container (%s): %s", execution.ID, err.Error())
+	}
+	if info.State.ExitCode != 0 {
+		t.Fatalf("Received non-zero exit code from container (%s): %d", execution.ID, info.State.ExitCode)
 	}
 	defer dockerClient.ContainerRemove(ctx, execution.ID, dockerTypes.ContainerRemoveOptions{})
 
