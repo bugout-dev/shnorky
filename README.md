@@ -1,6 +1,6 @@
-# simplex
+# shnorky
 
-Simplex is a workflow orchestrator which:
+Shnorky is a workflow orchestrator which:
 
 1. Runs on a single machine
 
@@ -11,7 +11,7 @@ Simplex is a workflow orchestrator which:
 
 ## Requirements
 
-+ [`docker`](https://docs.docker.com/install/) - Simplex uses docker to run workflow components
++ [`docker`](https://docs.docker.com/install/) - Shnorky uses docker to run workflow components
 
 ## Installation
 
@@ -29,32 +29,32 @@ Simplex is a workflow orchestrator which:
 
 Clone this repository:
 ```
-git clone https://github.com/simiotics/simplex.git
+git clone https://github.com/simiotics/shnorky.git
 ```
 
 Move into the cloned directory:
 ```
-cd simplex
+cd shnorky
 ```
 
-Make the `simplex` binary:
+Make the `shnorky` binary:
 ```
 make build
 ```
 
-This will create a `simplex` binary in that directory, which you can test:
+This will create a `shnorky` binary in that directory, which you can test:
 ```
-./simplex -h
+./shnorky -h
 ```
 
 To make this binary available globally, run:
 ```
-sudo mv ./simplex /usr/local/bin/
+sudo mv ./shnorky /usr/local/bin/
 ```
 
 Test again:
 ```
-simplex -h
+shnorky -h
 ```
 
 ## Usage
@@ -63,29 +63,29 @@ These usage examples use the example flows and components in the [`examples`](./
 
 ### Initialize state database
 
-First, determine where you would like to put the Simplex state directory - which should not already
+First, determine where you would like to put the Shnorky state directory - which should not already
 exist before you run the initialization command. Then:
 
 ```
-simplex -S <PATH TO STATE DIRECTORY> state init
+shnorky -S <PATH TO STATE DIRECTORY> state init
 ```
 
 ### Register a component
 
 ```
-simplex -S <PATH TO STATE DIRECTORY> components create -c examples/components/single-task -i single-task -t task
+shnorky -S <PATH TO STATE DIRECTORY> components create -c examples/components/single-task -i single-task -t task
 ```
 
 ### Register a flow
 
 ```
-simplex -S <PATH TO STATE DIRECTORY> flows create -i single-task-twice -s examples/flows/single-task-twice.json
+shnorky -S <PATH TO STATE DIRECTORY> flows create -i single-task-twice -s examples/flows/single-task-twice.json
 ```
 
 ### Build images for all components in a flow
 
 ```
-simplex -S <PATH TO STATE DIRECTORY> flows build -i single-task-twice
+shnorky -S <PATH TO STATE DIRECTORY> flows build -i single-task-twice
 ```
 
 ### Execute a flow
@@ -98,8 +98,8 @@ touch inputs.txt intermediate.txt outputs.txt
 
 Then, run the flow:
 ```
-simplex -S <PATH TO STATE DIRECTORY> flows execute \
-    -m "{\"first\": [{\"source\": \"$PWD/inputs.txt\", \"target\": \"/simplex/inputs/inputs.txt\", \"method\": \"bind\"}, {\"source\": \"$PWD/intermediate.txt\", \"target\": \"/simplex/outputs/outputs.txt\", \"method\": \"bind\"}], \"second\": [{\"source\": \"$PWD/intermediate.txt\", \"target\": \"/simplex/inputs/inputs.txt\", \"method\": \"bind\"}, {\"source\": \"$PWD/outputs.txt\", \"target\": \"/simplex/outputs/outputs.txt\", \"method\": \"bind\"}]}" \
+shnorky -S <PATH TO STATE DIRECTORY> flows execute \
+    -m "{\"first\": [{\"source\": \"$PWD/inputs.txt\", \"target\": \"/shnorky/inputs/inputs.txt\", \"method\": \"bind\"}, {\"source\": \"$PWD/intermediate.txt\", \"target\": \"/shnorky/outputs/outputs.txt\", \"method\": \"bind\"}], \"second\": [{\"source\": \"$PWD/intermediate.txt\", \"target\": \"/shnorky/inputs/inputs.txt\", \"method\": \"bind\"}, {\"source\": \"$PWD/outputs.txt\", \"target\": \"/shnorky/outputs/outputs.txt\", \"method\": \"bind\"}]}" \
     -i single-task-twice
 ```
 
@@ -116,7 +116,7 @@ run your data processing flows in production environments. For teams that do not
 scale these tools are designed for, these ceremonies introduce unnecessary overhead - often taking
 non-trivial amounts of maintenance effort every week.
 
-Simplex makes strong but simplifying assumptions about the environment in which it will run:
+Shnorky makes strong but simplifying assumptions about the environment in which it will run:
 
 1. It will run all components of a flow on a single machine.
 
@@ -125,22 +125,22 @@ Simplex makes strong but simplifying assumptions about the environment in which 
 3. It is sufficient to store the metadata related to its flows, their components, and each execution
 in a local database.
 
-Wherever possible, Simplex encourages use of the file system for communication between components in
+Wherever possible, Shnorky encourages use of the file system for communication between components in
 a workflow. This saves you from having to set up (and maintain) a RabbitMQ or Redis cluster.
 
-Simplex stores all metadata in a SQLite database on the same machine running the workflows. This
-saves you from having to set up (and maintain) a separate database server for Simplex metadata.
+Shnorky stores all metadata in a SQLite database on the same machine running the workflows. This
+saves you from having to set up (and maintain) a separate database server for Shnorky metadata.
 
-All this mean that there is no difference to Simplex between a production and a development
+All this mean that there is no difference to Shnorky between a production and a development
 environment. Generally all you have to do to run a workflow in production is develop it locally,
 commit it to a git repo of your choice, clone that repo in your production environment (best done
 with CI tools), register the flow (also using CI tools), and schedule it (using CI or manually, we
 like [`cron`](https://en.wikipedia.org/wiki/Cron) for this).
 
 If you are already using A Bunch of Scripts (TM) to implement your data processing flows, it is easy
-to run them using Simplex. Our [`examples/`](./examples) directory has samples you can copy from.
+to run them using Shnorky. Our [`examples/`](./examples) directory has samples you can copy from.
 
-Simplex is inspired by [`docker-compose`](https://github.com/docker/compose). It extends the
+Shnorky is inspired by [`docker-compose`](https://github.com/docker/compose). It extends the
 functionality of `docker-compose` to cover dependencies for data processing tasks.
 
 ## Help

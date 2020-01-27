@@ -13,7 +13,7 @@ import (
 
 // State initialization should fail if caller tries to initialize state in an existing directory
 func TestInitExistingDirectoryReturnsError(t *testing.T) {
-	stateDir, err := ioutil.TempDir("", "simplex-initialize-tests-")
+	stateDir, err := ioutil.TempDir("", "shnorky-initialize-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}
@@ -31,7 +31,7 @@ func TestInitExistingDirectoryReturnsError(t *testing.T) {
 func TestInit(t *testing.T) {
 	// We create a temporary directory and immediately remove it to get a path guaranteed to not
 	// exist within the "/tmp" equivalent on the machine running tests.
-	stateDir, err := ioutil.TempDir("", "simplex-initialize-tests-")
+	stateDir, err := ioutil.TempDir("", "shnorky-initialize-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}

@@ -11,7 +11,7 @@ import (
 
 	docker "github.com/docker/docker/client"
 
-	"github.com/simiotics/simplex/components"
+	"github.com/simiotics/shnorky/components"
 )
 
 // ErrEmptyID signifies that a caller attempted to create component metadata in which the ID string
@@ -47,9 +47,9 @@ func GenerateFlowMetadata(id, specificationPath string) (FlowMetadata, error) {
 	return metadata, nil
 }
 
-// AddFlow registers a flow (by metadata) against a simplex state database. It validates the
+// AddFlow registers a flow (by metadata) against a shnorky state database. It validates the
 // specification at the given path first.
-// This is the handler for `simplex flows add`
+// This is the handler for `shnorky flows add`
 func AddFlow(db *sql.DB, id, specificationPath string) (FlowMetadata, error) {
 	specFile, err := os.Open(specificationPath)
 	if err != nil {

@@ -11,7 +11,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/simiotics/simplex/state"
+	"github.com/simiotics/shnorky/state"
 )
 
 // TestInsertComponent tests that component insertion works as expected
@@ -22,7 +22,7 @@ func TestInsertComponent(t *testing.T) {
 		inSelection      bool
 	}
 
-	stateDir, err := ioutil.TempDir("", "simplex-insert-component-tests-")
+	stateDir, err := ioutil.TempDir("", "shnorky-insert-component-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}
@@ -132,7 +132,7 @@ func TestInsertComponent(t *testing.T) {
 // TestSelectComponentByID first runs InsertComponent a number of times to load a temporary state
 // database with some components. Then it tests various SelectComponentByID scenarios.
 func TestSelectComponentByID(t *testing.T) {
-	stateDir, err := ioutil.TempDir("", "simplex-select-component-by-id-tests-")
+	stateDir, err := ioutil.TempDir("", "shnorky-select-component-by-id-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}
@@ -217,7 +217,7 @@ func TestSelectComponentByID(t *testing.T) {
 // TestDeleteComponentByID first runs InsertComponent a number of times to load a temporary state
 // database with some components. Then it tests various DeleteComponentByID scenarios.
 func TestDeleteComponentByID(t *testing.T) {
-	stateDir, err := ioutil.TempDir("", "simplex-delete-component-by-id-tests-")
+	stateDir, err := ioutil.TempDir("", "shnorky-delete-component-by-id-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}
@@ -298,7 +298,7 @@ func TestInsertBuild(t *testing.T) {
 		shouldThrowError bool
 		inSelection      bool
 	}
-	stateDir, err := ioutil.TempDir("", "simplex-insert-build-tests-")
+	stateDir, err := ioutil.TempDir("", "shnorky-insert-build-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}
@@ -396,7 +396,7 @@ func TestInsertBuild(t *testing.T) {
 // TestSelectBuildByID first runs InsertBuild a number of times to load a temporary state database
 // with some builds. Then it tests various SelectBuildByID scenarios.
 func TestSelectBuildByID(t *testing.T) {
-	stateDir, err := ioutil.TempDir("", "simplex-select-build-by-id-tests-")
+	stateDir, err := ioutil.TempDir("", "shnorky-select-build-by-id-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}
@@ -465,7 +465,7 @@ func TestSelectBuildByID(t *testing.T) {
 // temporary state database with some builds. Then it tests that it can retrieve the most recent
 // build.
 func TestSelectMostRecentBuildForComponent(t *testing.T) {
-	stateDir, err := ioutil.TempDir("", "simplex-select-build-by-id-tests-")
+	stateDir, err := ioutil.TempDir("", "shnorky-select-build-by-id-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}
@@ -522,7 +522,7 @@ func TestInsertExecution(t *testing.T) {
 		shouldThrowError bool
 		inSelection      bool
 	}
-	stateDir, err := ioutil.TempDir("", "simplex-insert-execution-tests-")
+	stateDir, err := ioutil.TempDir("", "shnorky-insert-execution-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}
@@ -542,7 +542,7 @@ func TestInsertExecution(t *testing.T) {
 	defer db.Close()
 
 	build := BuildMetadata{
-		ID:          "simplex/good:latest",
+		ID:          "shnorky/good:latest",
 		ComponentID: "some-component",
 		CreatedAt:   time.Now(),
 	}
@@ -553,7 +553,7 @@ func TestInsertExecution(t *testing.T) {
 		{
 			metadata: ExecutionMetadata{
 				ID:          "good-execution",
-				BuildID:     "simplex/good:latest",
+				BuildID:     "shnorky/good:latest",
 				ComponentID: build.ComponentID,
 				CreatedAt:   time.Now(),
 			},

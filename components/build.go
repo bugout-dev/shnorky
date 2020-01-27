@@ -17,8 +17,8 @@ import (
 	docker "github.com/docker/docker/client"
 )
 
-// DockerImagePrefix is the prefix that simplex attaches to each docker image name
-var DockerImagePrefix = "simplex/"
+// DockerImagePrefix is the prefix that shnorky attaches to each docker image name
+var DockerImagePrefix = "shnorky/"
 
 // ErrEmptyComponentID signifies that a caller attempted to create build or execution metadata in
 // which the ComponentID string was the empty string

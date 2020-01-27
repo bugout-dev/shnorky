@@ -12,7 +12,7 @@ import (
 // configuration. It indicates that the value for the Method member was invalid.
 var ErrInvalidMountMethod = errors.New("Invalid mount method in component mount configuration: must be one of \"bind\", \"volume\", \"tmpfs\"")
 
-// MountConfiguration - describes the run-time mount configuration for a simplex component
+// MountConfiguration - describes the run-time mount configuration for a shnorky component
 type MountConfiguration struct {
 	Source string `json:"source"`
 	Target string `json:"target"`

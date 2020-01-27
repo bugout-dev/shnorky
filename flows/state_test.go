@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/simiotics/simplex/state"
+	"github.com/simiotics/shnorky/state"
 )
 
 // TestInsertFlow tests that flow insertion works as expected
@@ -20,7 +20,7 @@ func TestInsertFlow(t *testing.T) {
 		inSelection      bool
 	}
 
-	stateDir, err := ioutil.TempDir("", "simplex-insert-flow-tests-")
+	stateDir, err := ioutil.TempDir("", "shnorky-insert-flow-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}
@@ -118,7 +118,7 @@ func TestInsertFlow(t *testing.T) {
 // TestSelectFlowByID first runs InsertFlow a number of times to load a temporary state database
 // with some flows. Then it tests various SelectFlowByID scenarios.
 func TestSelectFlowByID(t *testing.T) {
-	stateDir, err := ioutil.TempDir("", "simplex-select-flow-by-id-tests-")
+	stateDir, err := ioutil.TempDir("", "shnorky-select-flow-by-id-tests-")
 	if err != nil {
 		t.Fatalf("Could not create temporary directory: %s", err.Error())
 	}

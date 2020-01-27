@@ -256,7 +256,7 @@ tags
 
 # End of https://www.gitignore.io/api/go,osx,vim,linux,emacs,python,visualstudiocode
 
-# Prevent accidental commits of the simplex binary
-simplex
+# Prevent accidental commits of the shnorky binary
+shnorky
 
 .vscode/

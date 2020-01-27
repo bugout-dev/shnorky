@@ -8,14 +8,14 @@ import (
 )
 
 // Service is a component type which represents a long-running service that must be available as
-// part of a simplex data processing flow
+// part of a shnorky data processing flow
 var Service = "service"
 
 // Task is a component type which represents a process that must be run to completion as part of a
-// simplex data processing flow
+// shnorky data processing flow
 var Task = "task"
 
-// ComponentTypes is a set (of keys) enumerating the types of components that simplex respects
+// ComponentTypes is a set (of keys) enumerating the types of components that shnorky respects
 var ComponentTypes = map[string]bool{
 	Service: true,
 	Task:    true,
@@ -43,7 +43,7 @@ type ComponentMetadata struct {
 }
 
 // DefaultSpecificationFileName - this is the name of the file inside the component directory
-// representing the simplex specification of the component.
+// representing the shnorky specification of the component.
 var DefaultSpecificationFileName = "component.json"
 
 // GenerateComponentMetadata creates a ComponentMetadata instance from the specified parameters,
@@ -82,9 +82,9 @@ func GenerateComponentMetadata(id, componentType, componentPath, specificationPa
 	return metadata, nil
 }
 
-// AddComponent registers a component (by metadata) against a simplex state database. It applies
+// AddComponent registers a component (by metadata) against a shnorky state database. It applies
 // reasonable defaults where possible (e.g. on SpecificationPath).
-// This is the handler for `simplex components add`
+// This is the handler for `shnorky components add`
 func AddComponent(db *sql.DB, id, componentType, componentPath, specificationPath string) (ComponentMetadata, error) {
 	metadata, err := GenerateComponentMetadata(id, componentType, componentPath, specificationPath)
 	if err != nil {

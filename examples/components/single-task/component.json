@@ -10,13 +10,13 @@
         "mountpoints": [
             {
                 "mount_type": "file",
-                "mountpoint": "/simplex/inputs/inputs.txt",
+                "mountpoint": "/shnorky/inputs/inputs.txt",
                 "read_only": true,
                 "required": true
             },
             {
                 "mount_type": "file",
-                "mountpoint": "/simplex/outputs/outputs.txt",
+                "mountpoint": "/shnorky/outputs/outputs.txt",
                 "read_only": false,
                 "required": true
             }

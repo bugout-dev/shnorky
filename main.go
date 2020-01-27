@@ -15,9 +15,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/simiotics/simplex/components"
-	"github.com/simiotics/simplex/flows"
-	"github.com/simiotics/simplex/state"
+	"github.com/simiotics/shnorky/components"
+	"github.com/simiotics/shnorky/flows"
+	"github.com/simiotics/shnorky/state"
 )
 
 // logLevels - mapping between log level specification strings and logrus Level values
@@ -49,7 +49,7 @@ func generateLogger() *logrus.Logger {
 	return log
 }
 
-// Version denotes the current version of the simplex tool and library
+// Version denotes the current version of the shnorky tool and library
 var Version = "0.1.0-dev"
 
 var log = generateLogger()
@@ -72,7 +72,7 @@ func generateDockerClient() *docker.Client {
 }
 
 func main() {
-	defaultStateDir := ".simplex"
+	defaultStateDir := ".shnorky"
 	currentUser, err := user.Current()
 	if err != nil {
 		log.WithField("error", err).Fatal("Error looking up current user")
@@ -83,55 +83,55 @@ func main() {
 
 	var id, componentType, componentPath, specificationPath, stateDir, mountConfig string
 
-	simplexCommand := &cobra.Command{
-		Use:              "simplex",
+	shnorkyCommand := &cobra.Command{
+		Use:              "shnorky",
 		Short:            "Single-node data processing flows using docker",
-		Long:             "simplex lets you define data processing flows and then execute them using docker. It runs on a single machine.",
+		Long:             "shnorky lets you define data processing flows and then execute them using docker. It runs on a single machine.",
 		TraverseChildren: true,
 	}
 
-	simplexCommand.PersistentFlags().StringVarP(&stateDir, "statedir", "S", defaultStateDir, "Path to simplex state directory")
+	shnorkyCommand.PersistentFlags().StringVarP(&stateDir, "statedir", "S", defaultStateDir, "Path to shnorky state directory")
 
-	// simplex version
+	// shnorky version
 	versionCommand := &cobra.Command{
 		Use:   "version",
-		Short: "simplex version number",
+		Short: "shnorky version number",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println(Version)
 		},
 	}
 
-	// simplex completion
+	// shnorky completion
 	completionCommand := &cobra.Command{
 		Use:   "completion",
-		Short: "Generate shell completions for the simplex command (for supported shells)",
+		Short: "Generate shell completions for the shnorky command (for supported shells)",
 	}
 
 	bashCompletionCommand := &cobra.Command{
 		Use:   "bash",
-		Short: "bash completion for simplex",
-		Long: `bash completion for simplex
+		Short: "bash completion for shnorky",
+		Long: `bash completion for shnorky
 
-If you are using bash and want command completion for the simplex CLI, run (ommiting the $):
-	$ . <(simplex completion bash)
+If you are using bash and want command completion for the shnorky CLI, run (ommiting the $):
+	$ . <(shnorky completion bash)
 `,
 		Run: func(cmd *cobra.Command, args []string) {
-			simplexCommand.GenBashCompletion(os.Stdout)
+			shnorkyCommand.GenBashCompletion(os.Stdout)
 		},
 	}
 
 	completionCommand.AddCommand(bashCompletionCommand)
 
-	// simplex state
+	// shnorky state
 	stateCommand := &cobra.Command{
 		Use:   "state",
-		Short: "Interact with simplex state",
-		Long:  "This command provides access to the simplex state database",
+		Short: "Interact with shnorky state",
+		Long:  "This command provides access to the shnorky state database",
 	}
 
 	initCommand := &cobra.Command{
 		Use:   "init",
-		Short: "Initializes a simplex state directory",
+		Short: "Initializes a shnorky state directory",
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.WithField("stateDir", stateDir)
 			logger.Info("Initializing state directory")
@@ -146,22 +146,22 @@ If you are using bash and want command completion for the simplex CLI, run (ommi
 
 	stateCommand.AddCommand(initCommand)
 
-	// simplex components
+	// shnorky components
 	componentsCommand := &cobra.Command{
 		Use:   "components",
-		Short: "Interact with simplex components",
-		Long: `Interact with simplex components
+		Short: "Interact with shnorky components",
+		Long: `Interact with shnorky components
 
-simplex components represent individual steps in a data processing flow. This command allows you
-to interact with your simplex components (add new components, inspect existing components, remove
-unwanted components from your simplex state, and build and execute components).
+shnorky components represent individual steps in a data processing flow. This command allows you
+to interact with your shnorky components (add new components, inspect existing components, remove
+unwanted components from your shnorky state, and build and execute components).
 `,
 	}
 
 	createComponentCommand := &cobra.Command{
 		Use:   "create",
-		Short: "Add a component to simplex",
-		Long:  "Adds a new component to simplex and makes it available in the state database",
+		Short: "Add a component to shnorky",
+		Long:  "Adds a new component to shnorky and makes it available in the state database",
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.WithFields(
 				logrus.Fields{
@@ -239,8 +239,8 @@ unwanted components from your simplex state, and build and execute components).
 
 	removeComponentCommand := &cobra.Command{
 		Use:   "remove",
-		Short: "Remove a component from simplex",
-		Long:  "Removes a component registered against simplex from the state database",
+		Short: "Remove a component from shnorky",
+		Long:  "Removes a component registered against shnorky from the state database",
 		Run: func(cmd *cobra.Command, args []string) {
 			db := openStateDB(stateDir)
 			defer db.Close()
@@ -355,22 +355,22 @@ unwanted components from your simplex state, and build and execute components).
 		createExecutionCommand,
 	)
 
-	// simplex flows
+	// shnorky flows
 	flowsCommand := &cobra.Command{
 		Use:   "flows",
-		Short: "Interact with simplex flows",
-		Long: `Interact with simplex flows
+		Short: "Interact with shnorky flows",
+		Long: `Interact with shnorky flows
 
-simplex flows represent entire data processing flows. This command allows you to interact with your
-simplex flows (add new flows, inspect existing flows, remove unwanted flows from your simplex state,
+shnorky flows represent entire data processing flows. This command allows you to interact with your
+shnorky flows (add new flows, inspect existing flows, remove unwanted flows from your shnorky state,
 and build and execute flows).
 `,
 	}
 
 	createFlowCommand := &cobra.Command{
 		Use:   "create",
-		Short: "Add a flow to simplex",
-		Long:  "Adds a new flow to simplex and makes it available in the state database",
+		Short: "Add a flow to shnorky",
+		Long:  "Adds a new flow to shnorky and makes it available in the state database",
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := log.WithFields(
 				logrus.Fields{
@@ -431,8 +431,8 @@ and build and execute flows).
 
 	executeFlowCommand := &cobra.Command{
 		Use:   "execute",
-		Short: "Execute a simplex flow",
-		Long:  "Executes a simplex flow",
+		Short: "Execute a shnorky flow",
+		Long:  "Executes a shnorky flow",
 		Run: func(cmd *cobra.Command, args []string) {
 			db := openStateDB(stateDir)
 			defer db.Close()
@@ -460,9 +460,9 @@ and build and execute flows).
 
 	flowsCommand.AddCommand(createFlowCommand, buildFlowCommand, executeFlowCommand)
 
-	simplexCommand.AddCommand(versionCommand, completionCommand, stateCommand, componentsCommand, flowsCommand)
+	shnorkyCommand.AddCommand(versionCommand, completionCommand, stateCommand, componentsCommand, flowsCommand)
 
-	err = simplexCommand.Execute()
+	err = shnorkyCommand.Execute()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

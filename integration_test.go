@@ -12,21 +12,21 @@ import (
 
 	dockerTypes "github.com/docker/docker/api/types"
 
-	"github.com/simiotics/simplex/components"
-	"github.com/simiotics/simplex/flows"
-	"github.com/simiotics/simplex/state"
+	"github.com/simiotics/shnorky/components"
+	"github.com/simiotics/shnorky/flows"
+	"github.com/simiotics/shnorky/state"
 )
 
 func TestSingleComponent(t *testing.T) {
-	stateDir, err := ioutil.TempDir("", "simplex-TestSingleComponent-")
+	stateDir, err := ioutil.TempDir("", "shnorky-TestSingleComponent-")
 	if err != nil {
-		t.Fatalf("Could not create directory to hold Simplex state: %s", err.Error())
+		t.Fatalf("Could not create directory to hold Shnorky state: %s", err.Error())
 	}
 	os.RemoveAll(stateDir)
 
 	err = state.Init(stateDir)
 	if err != nil {
-		t.Fatalf("Error initializing Simplex state directory: %s", err.Error())
+		t.Fatalf("Error initializing Shnorky state directory: %s", err.Error())
 	}
 	defer os.RemoveAll(stateDir)
 
@@ -112,12 +112,12 @@ func TestSingleComponent(t *testing.T) {
 	mounts := []components.MountConfiguration{
 		{
 			Source: inputFile.Name(),
-			Target: "/simplex/inputs/inputs.txt",
+			Target: "/shnorky/inputs/inputs.txt",
 			Method: "bind",
 		},
 		{
 			Source: outputFile.Name(),
-			Target: "/simplex/outputs/outputs.txt",
+			Target: "/shnorky/outputs/outputs.txt",
 			Method: "bind",
 		},
 	}
@@ -168,15 +168,15 @@ func TestSingleComponent(t *testing.T) {
 }
 
 func TestFlowSingleTaskTwice(t *testing.T) {
-	stateDir, err := ioutil.TempDir("", "simplex-TestFlowSingleTaskTwice-")
+	stateDir, err := ioutil.TempDir("", "shnorky-TestFlowSingleTaskTwice-")
 	if err != nil {
-		t.Fatalf("Could not create directory to hold Simplex state: %s", err.Error())
+		t.Fatalf("Could not create directory to hold Shnorky state: %s", err.Error())
 	}
 	os.RemoveAll(stateDir)
 
 	err = state.Init(stateDir)
 	if err != nil {
-		t.Fatalf("Error initializing Simplex state directory: %s", err.Error())
+		t.Fatalf("Error initializing Shnorky state directory: %s", err.Error())
 	}
 	defer os.RemoveAll(stateDir)
 
@@ -290,24 +290,24 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 		"first": {
 			{
 				Source: inputFile.Name(),
-				Target: "/simplex/inputs/inputs.txt",
+				Target: "/shnorky/inputs/inputs.txt",
 				Method: "bind",
 			},
 			{
 				Source: intermediateFile.Name(),
-				Target: "/simplex/outputs/outputs.txt",
+				Target: "/shnorky/outputs/outputs.txt",
 				Method: "bind",
 			},
 		},
 		"second": {
 			{
 				Source: intermediateFile.Name(),
-				Target: "/simplex/inputs/inputs.txt",
+				Target: "/shnorky/inputs/inputs.txt",
 				Method: "bind",
 			},
 			{
 				Source: outputFile.Name(),
-				Target: "/simplex/outputs/outputs.txt",
+				Target: "/shnorky/outputs/outputs.txt",
 				Method: "bind",
 			},
 		},

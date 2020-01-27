@@ -1,4 +1,4 @@
-module github.com/simiotics/simplex
+module github.com/simiotics/shnorky
 
 go 1.13
 

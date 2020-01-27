@@ -96,7 +96,7 @@ func DeleteComponentByID(db *sql.DB, id string) error {
 	return nil
 }
 
-// InsertBuild inserts the build represented by the given build metadata into the given simplex
+// InsertBuild inserts the build represented by the given build metadata into the given shnorky
 // state database
 func InsertBuild(db *sql.DB, buildMetadata BuildMetadata) error {
 	tx, err := db.Begin()

@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-// FlowSpecification - struct specifying a simplex data processing flow
+// FlowSpecification - struct specifying a shnorky data processing flow
 type FlowSpecification struct {
 	// Steps indexes each step in the flow and maps step names to component IDs
 	Steps map[string]string `json:"steps"`

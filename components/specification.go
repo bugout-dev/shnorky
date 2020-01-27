@@ -10,14 +10,14 @@ import (
 // Specifically, that the MountType member did not have a valid value.
 var ErrInvalidMountType = errors.New("Invalid mount type in component mount specification: must be one of \"file\", \"dir\"")
 
-// ComponentSpecification - struct specifying how a component of a simplex data processing flow
+// ComponentSpecification - struct specifying how a component of a shnorky data processing flow
 // should be built and executed
 type ComponentSpecification struct {
 	Build BuildSpecification `json:"build"`
 	Run   RunSpecification   `json:"run"`
 }
 
-// BuildSpecification - struct specifying how a component of a simplex data processing flow should
+// BuildSpecification - struct specifying how a component of a shnorky data processing flow should
 // be built; all paths are assumed to be paths relative to the component path (i.e. the directory
 // containing the implementation of the component)
 type BuildSpecification struct {
@@ -29,7 +29,7 @@ type BuildSpecification struct {
 	Dockerfile string `json:"Dockerfile"`
 }
 
-// RunSpecification - struct specifying how a component of a simplex data processing flow should be
+// RunSpecification - struct specifying how a component of a shnorky data processing flow should be
 // executed
 type RunSpecification struct {
 	// Mapping of environment variable names to values to be set in component container at runtime
@@ -37,8 +37,8 @@ type RunSpecification struct {
 	//
 	// Special values:
 	// "env:<VARIABLE_NAME>" - specifies that the value of the environment variable denoted by
-	// VARIABLE_NAME in the simplex process should be interpolated into the specification; if the
-	// environment variable is not set in the simplex process, it will use the empty string "" as
+	// VARIABLE_NAME in the shnorky process should be interpolated into the specification; if the
+	// environment variable is not set in the shnorky process, it will use the empty string "" as
 	// the value
 	Env map[string]string `json:"env"`
 
@@ -55,7 +55,7 @@ type RunSpecification struct {
 	// string as "<uid>:<guid>".
 	// Special values:
 	// "" - container runs as root
-	// "${CURRENT_USER}" - container runs as the user executing the simplex process
+	// "${CURRENT_USER}" - container runs as the user executing the shnorky process
 	// "name:<username>" - container runs as the user with the given username
 	User string `json:"user"`
 }
@@ -70,7 +70,7 @@ const (
 	MountTypeDir
 )
 
-// MountSpecification - specifies a mount point within a simplex component, how it should be mounted
+// MountSpecification - specifies a mount point within a shnorky component, how it should be mounted
 // on the container side, and whether or not it is required to be mounted at runtime
 // TODO(nkashy1): It does not make sense to specify this kind of mount type in the
 // MountSpecification - the mount type (e.g. whether it is a bind mount or a docker volume mount) is
