@@ -20,7 +20,7 @@ func ReadMountConfiguration(reader io.Reader) (map[string][]components.MountConf
 		return map[string][]components.MountConfiguration{}, err
 	}
 
-	var mountConfigurations map[string][]components.MountConfiguration
+	mountConfigurations := map[string][]components.MountConfiguration{}
 	for step, rawConfigs := range rawMountConfigurations {
 		materializedConfigs := make([]components.MountConfiguration, len(rawConfigs))
 		for i, rawConfig := range rawConfigs {
