@@ -1,6 +1,6 @@
 test_target ?= ./...
 
-build: shnorky
+build: shn
 
 format:
 	gofmt -s -w .
@@ -9,10 +9,10 @@ test:
 	go test $(cli_args) $(test_target)
 
 clean:
-	touch shnorky
-	rm shnorky
+	touch shn
+	rm shn
 
-shnorky:
-	CGO_ENABLED=1 go build $(cli_args) .
+shn:
+	CGO_ENABLED=1 go build -o shn $(cli_args) .
 
 .PHONY: build test format clean

@@ -72,7 +72,7 @@ func generateDockerClient() *docker.Client {
 }
 
 func main() {
-	defaultStateDir := ".shnorky"
+	defaultStateDir := ".shn"
 	currentUser, err := user.Current()
 	if err != nil {
 		log.WithField("error", err).Fatal("Error looking up current user")
@@ -84,8 +84,8 @@ func main() {
 	var id, componentType, componentPath, specificationPath, stateDir, mountConfig string
 
 	shnorkyCommand := &cobra.Command{
-		Use:              "shnorky",
-		Short:            "Single-node data processing flows using docker",
+		Use:              "shn",
+		Short:            "Shnorky: Single-machine data processing flows using docker",
 		Long:             "shnorky lets you define data processing flows and then execute them using docker. It runs on a single machine.",
 		TraverseChildren: true,
 	}
