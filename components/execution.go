@@ -51,7 +51,6 @@ func GenerateExecutionMetadata(build BuildMetadata, flowID string) (ExecutionMet
 // Execute runs a container corresponding to the given build of the given component.
 // TODO(nkashy1): Maybe take build metadata instead of build ID? This will reduce the number of
 // database lookups that happen in flow execution.
-// TODO(nkashy1): Remove flowID argument. Flow executions are handled separately in flows package.
 func Execute(
 	ctx context.Context,
 	db *sql.DB,
