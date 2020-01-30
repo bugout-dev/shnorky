@@ -28,7 +28,7 @@ If you have `go` installed on your computer, you can get Shnorky using `go get`:
 go get github.com/simiotics/shnorky
 ```
 
-This will put the `shnorky` binary in your `\`go env GOPATH\`/bin` directory.
+This will put the Shnorky `shn` binary in your `\`go env GOPATH\`/bin` directory.
 
 ### From source
 
@@ -52,24 +52,24 @@ Move into the cloned directory:
 cd shnorky
 ```
 
-Make the `shnorky` binary:
+Make the `shn` binary:
 ```
 make build
 ```
 
-This will create a `shnorky` binary in that directory, which you can test:
+This will create a `shn` binary in that directory, which you can test:
 ```
-./shnorky -h
+./shn -h
 ```
 
 To make this binary available globally, run:
 ```
-sudo mv ./shnorky /usr/local/bin/
+sudo mv ./shn /usr/local/bin/
 ```
 
 Test again:
 ```
-shnorky -h
+shn -h
 ```
 
 ## Usage
@@ -82,25 +82,25 @@ First, determine where you would like to put the Shnorky state directory - which
 exist before you run the initialization command. Then:
 
 ```
-shnorky -S <PATH TO STATE DIRECTORY> state init
+shn -S <PATH TO STATE DIRECTORY> state init
 ```
 
 ### Register a component
 
 ```
-shnorky -S <PATH TO STATE DIRECTORY> components create -c examples/components/single-task -i single-task -t task
+shn -S <PATH TO STATE DIRECTORY> components create -c examples/components/single-task -i single-task -t task
 ```
 
 ### Register a flow
 
 ```
-shnorky -S <PATH TO STATE DIRECTORY> flows create -i single-task-twice -s examples/flows/single-task-twice.json
+shn -S <PATH TO STATE DIRECTORY> flows create -i single-task-twice -s examples/flows/single-task-twice.json
 ```
 
 ### Build images for all components in a flow
 
 ```
-shnorky -S <PATH TO STATE DIRECTORY> flows build -i single-task-twice
+shn -S <PATH TO STATE DIRECTORY> flows build -i single-task-twice
 ```
 
 ### Execute a flow
@@ -113,7 +113,7 @@ touch inputs.txt intermediate.txt outputs.txt
 
 Then, run the flow:
 ```
-shnorky -S <PATH TO STATE DIRECTORY> flows execute \
+shn -S <PATH TO STATE DIRECTORY> flows execute \
     -m "{\"first\": [{\"source\": \"$PWD/inputs.txt\", \"target\": \"/shnorky/inputs/inputs.txt\", \"method\": \"bind\"}, {\"source\": \"$PWD/intermediate.txt\", \"target\": \"/shnorky/outputs/outputs.txt\", \"method\": \"bind\"}], \"second\": [{\"source\": \"$PWD/intermediate.txt\", \"target\": \"/shnorky/inputs/inputs.txt\", \"method\": \"bind\"}, {\"source\": \"$PWD/outputs.txt\", \"target\": \"/shnorky/outputs/outputs.txt\", \"method\": \"bind\"}]}" \
     -i single-task-twice
 ```
