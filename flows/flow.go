@@ -7,11 +7,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
-	"sync"
 	"time"
 
-	dockerContainer "github.com/docker/docker/api/types/container"
 	docker "github.com/docker/docker/client"
 
 	"github.com/simiotics/shnorky/components"
@@ -149,7 +146,7 @@ func Execute(
 	}
 
 	componentExecutions := map[string]components.ExecutionMetadata{}
-	for stageNum, stage := range stages {
+	for _, stage := range stages {
 		stepExecutions := map[string]components.ExecutionMetadata{}
 		for _, step := range stage {
 			executionMetadata, err := components.Execute(ctx, db, dockerClient, buildIDs[step], flowID, mounts[step])
@@ -160,68 +157,20 @@ func Execute(
 			stepExecutions[step] = executionMetadata
 		}
 
-		errorChan := make(chan error)
-		var wg sync.WaitGroup
-		for _, executionMetadata := range stepExecutions {
-			doneChan := make(chan bool)
-
-			wg.Add(1)
-			go func(exitChan <-chan bool) {
-				defer wg.Done()
-				waitOKBodyChannel, errChannel := dockerClient.ContainerWait(ctx, executionMetadata.ID, dockerContainer.WaitConditionNotRunning)
-				select {
-				case waitErr := <-errChannel:
-					if waitErr != nil {
-						errorChan <- waitErr
-					} else {
-						waitOKBody := <-waitOKBodyChannel
-						if waitOKBody.StatusCode != 0 {
-							errorChan <- fmt.Errorf("Received non-zero exit code (%d) from container (ID: %s)", waitOKBody.StatusCode, executionMetadata.ID)
-						}
-					}
-					doneChan <- true
-				case <-exitChan:
-					return
+		for step, executionMetadata := range stepExecutions {
+			for {
+				info, err := dockerClient.ContainerInspect(ctx, executionMetadata.ID)
+				if err != nil {
+					return componentExecutions, fmt.Errorf("Error executing step (%s): %s", step, err.Error())
 				}
-			}(doneChan)
-
-			info, err := dockerClient.ContainerInspect(ctx, executionMetadata.ID)
-			if err != nil {
-				doneChan <- true
-				errorChan <- err
-			}
-			if !info.State.Running {
-				doneChan <- true
-				if info.State.ExitCode != 0 {
-					errorChan <- fmt.Errorf(
-						"Non-zero exit code from container (%s) for build (%s) of component (%s): %d",
-						executionMetadata.ID,
-						executionMetadata.BuildID,
-						executionMetadata.ComponentID,
-						info.State.ExitCode,
-					)
+				if info.State.Running {
+					continue
+				} else if info.State.ExitCode == 0 {
+					break
+				} else {
+					return componentExecutions, fmt.Errorf("Container (%s) for step (%s) exited with non-zero code: %d", info.ID, step, info.State.ExitCode)
 				}
 			}
-		}
-
-		wg.Wait()
-		close(errorChan)
-		executionErrors := []error{}
-		for {
-			executionErr, more := <-errorChan
-			if more {
-				executionErrors = append(executionErrors, executionErr)
-			} else {
-				break
-			}
-		}
-
-		if len(executionErrors) > 0 {
-			executionErrorMessages := make([]string, len(executionErrors))
-			for i, executionErr := range executionErrors {
-				executionErrorMessages[i] = executionErr.Error()
-			}
-			return componentExecutions, fmt.Errorf("Received the following errors executing flow at step %d: %s", stageNum, strings.Join(executionErrorMessages, ", "))
 		}
 	}
 

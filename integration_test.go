@@ -7,12 +7,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 	"strings"
-	"sync"
 	"testing"
+	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
-	dockerContainer "github.com/docker/docker/api/types/container"
 
 	"github.com/simiotics/shnorky/components"
 	"github.com/simiotics/shnorky/flows"
@@ -129,45 +129,28 @@ func TestSingleComponent(t *testing.T) {
 		t.Fatalf("Error executing build (%s): %s", build.ID, err.Error())
 	}
 
-	doneChan := make(chan bool)
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-	go func(exitChan <-chan bool) {
-		defer wg.Done()
-		waitOKBodyChannel, errChannel := dockerClient.ContainerWait(ctx, execution.ID, dockerContainer.WaitConditionNotRunning)
-		select {
-		case waitErr := <-errChannel:
-			if waitErr != nil {
-				t.Fatalf("Error waiting for container (ID: %s) to exit: %s", execution.ID, waitErr.Error())
-			} else {
-				waitOKBody := <-waitOKBodyChannel
-				if waitOKBody.StatusCode != 0 {
-					t.Fatalf("Received non-zero exit code (%d) from container (ID: %s)", waitOKBody.StatusCode, execution.ID)
-				}
-			}
-			doneChan <- true
-		case <-exitChan:
-			return
+	testTimeoutRaw := os.Getenv("SHNORKY_TEST_TIMEOUT")
+	if testTimeoutRaw == "" {
+		testTimeoutRaw = "30"
+	}
+	testTimeout, err := strconv.ParseInt(testTimeoutRaw, 10, 0)
+	if err != nil {
+		t.Fatalf("Error parsing test timeout from SHNORKY_TEST_TIMEOUT environment variable: %s", testTimeoutRaw)
+	}
+	for i := 0; i < int(testTimeout); i++ {
+		time.Sleep(time.Second)
+		info, err := dockerClient.ContainerInspect(ctx, execution.ID)
+		if err != nil {
+			t.Fatalf("Error insepcting container (%s): %s", execution.ID, err.Error())
 		}
-	}(doneChan)
 
-	info, err := dockerClient.ContainerInspect(ctx, execution.ID)
-	if err != nil {
-		t.Fatalf("Error insepcting container (%s): %s", execution.ID, err.Error())
-	}
-	if !info.State.Running {
-		doneChan <- true
-	}
-
-	wg.Wait()
-
-	info, err = dockerClient.ContainerInspect(ctx, execution.ID)
-	if err != nil {
-		t.Fatalf("Error insepcting container (%s): %s", execution.ID, err.Error())
-	}
-	if info.State.ExitCode != 0 {
-		t.Fatalf("Received non-zero exit code from container (%s): %d", execution.ID, info.State.ExitCode)
+		if info.State.Running {
+			continue
+		} else if info.State.ExitCode == 0 {
+			break
+		} else {
+			t.Fatalf("Container exited with non-zero exit code: %d", info.State.ExitCode)
+		}
 	}
 	defer dockerClient.ContainerRemove(ctx, execution.ID, dockerTypes.ContainerRemoveOptions{})
 
