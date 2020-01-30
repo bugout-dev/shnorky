@@ -3,7 +3,10 @@ package components
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"os"
+	"os/user"
 )
 
 // ErrInvalidMountType signifies that there was an error parsing a component mount specification.
@@ -55,8 +58,9 @@ type RunSpecification struct {
 	// string as "<uid>:<guid>".
 	// Special values:
 	// "" - container runs as root
-	// "${CURRENT_USER}" - container runs as the user executing the shnorky process
-	// "name:<username>" - container runs as the user with the given username
+	// "env:<VARIABLE_NAME>" - container runs as user specified by environment variable; use
+	// "env:USER" to use the user running the current shnorky process, for example
+	// "user:<username>" - container runs as the user with the given username
 	User string `json:"user"`
 }
 
@@ -77,7 +81,6 @@ const (
 // the responsibility of the caller. What does make sense is for MountType to specify the type of
 // filesystem object that the mountpoint expects (e.g. file vs. directory)
 type MountSpecification struct {
-	// See documentation of mount type here: https://godoc.org/github.com/docker/docker/api/types/mount#Type
 	// Can be one of the keys of the ValidMountTypes map.
 	MountType  string `json:"mount_type"`
 	Mountpoint string `json:"mountpoint"`
@@ -112,4 +115,73 @@ func ReadSingleSpecification(reader io.Reader) (ComponentSpecification, error) {
 	}
 
 	return specification, nil
+}
+
+// MaterializeComponentSpecification applies all run-time substitutions to the given
+// ComponentSpecification
+// For example, it replaces all "env:..." values with values of the corresponding environment
+// variables in the invoking process.
+func MaterializeComponentSpecification(rawSpecification ComponentSpecification) (ComponentSpecification, error) {
+	materializedRunSpecification, err := MaterializeRunSpecification(rawSpecification.Run)
+	if err != nil {
+		return rawSpecification, fmt.Errorf("Could not materialize run specification: %s", err.Error())
+	}
+
+	materializedSpecification := ComponentSpecification{
+		Build: rawSpecification.Build,
+		Run:   materializedRunSpecification,
+	}
+	return materializedSpecification, nil
+}
+
+// MaterializeRunSpecification applies all run-time substitutions to the given RunSpecification
+func MaterializeRunSpecification(rawSpecification RunSpecification) (RunSpecification, error) {
+	materializedUser, err := MaterializeUsername(rawSpecification.User)
+	if err != nil {
+		return rawSpecification, fmt.Errorf("Could not materialize user: %s", err.Error())
+	}
+
+	materializedEnv := map[string]string{}
+	for key, value := range rawSpecification.Env {
+		materializedEnv[key] = MaterializeEnv(value)
+	}
+
+	materializedSpecification := RunSpecification{
+		Env:         materializedEnv,
+		Entrypoint:  rawSpecification.Entrypoint,
+		Cmd:         rawSpecification.Cmd,
+		Mountpoints: rawSpecification.Mountpoints,
+		User:        materializedUser,
+	}
+	return materializedSpecification, nil
+}
+
+// SpecialPrefixEnv denotes that a value in a specification refers to the environment variable whose
+// name is its suffix.
+var SpecialPrefixEnv = "env:"
+
+// SpecialPrefixUsername denotes that a value in a specification refers to a username, its suffix.
+var SpecialPrefixUsername = "user:"
+
+// MaterializeEnv checks if a string is prefixed with "env:". If it is, it returns the value of the
+// environment variable whose name is the remainder of the string. If not, it returns the input
+// value.
+func MaterializeEnv(rawValue string) string {
+	if len(rawValue) >= len(SpecialPrefixEnv) && rawValue[:len(SpecialPrefixEnv)] == SpecialPrefixEnv {
+		return os.Getenv(rawValue[len(SpecialPrefixEnv):])
+	}
+	return rawValue
+}
+
+// MaterializeUsername returns a "uid:gid" string for the user with the given name if the user
+// exists, otherwise it returns an error
+func MaterializeUsername(rawValue string) (string, error) {
+	if len(rawValue) >= len(SpecialPrefixUsername) && rawValue[:len(SpecialPrefixUsername)] == SpecialPrefixUsername {
+		targetUser, err := user.Lookup(rawValue[len(SpecialPrefixUsername):])
+		if err != nil {
+			return rawValue, err
+		}
+		return fmt.Sprintf("%s:%s", targetUser.Uid, targetUser.Gid), nil
+	}
+	return rawValue, nil
 }

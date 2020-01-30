@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/user"
 	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
@@ -83,9 +82,14 @@ func Execute(
 
 	specFile, err := os.Open(componentMetadata.SpecificationPath)
 	defer specFile.Close()
-	specification, err := ReadSingleSpecification(specFile)
+	rawSpecification, err := ReadSingleSpecification(specFile)
 	if err != nil {
 		return executionMetadata, fmt.Errorf("Could not open specification file (%s): %s", componentMetadata.SpecificationPath, err.Error())
+	}
+
+	specification, err := MaterializeComponentSpecification(rawSpecification)
+	if err != nil {
+		return executionMetadata, fmt.Errorf("Could not materialize component specification: %s", err.Error())
 	}
 
 	containerConfig := &dockerContainer.Config{
@@ -96,33 +100,11 @@ func Execute(
 	containerConfig.Env = make([]string, len(specification.Run.Env))
 	i := 0
 	for key, value := range specification.Run.Env {
-		// Handle special values in specification
-		// TODO(nkashy1): Factor this materialization out into its own function.
-		materializedValue := value
-		if len(value) > 4 && value[:4] == "env:" {
-			materializedValue = os.Getenv(value[4:])
-		}
-		envvar := fmt.Sprintf("%s=%s", key, materializedValue)
-		containerConfig.Env[i] = envvar
+		containerConfig.Env[i] = fmt.Sprintf("%s=%s", key, value)
 		i++
 	}
 
-	// TODO(nkashy1): Factor out handling of special values into separate function.
-	if specification.Run.User == "${CURRENT_USER}" {
-		targetUser, err := user.Current()
-		if err != nil {
-			return executionMetadata, fmt.Errorf("Error retrieving information about current user (as per $CURRENT value set in component specification: %s", err.Error())
-		}
-		containerConfig.User = targetUser.Uid
-	} else if len(specification.Run.User) >= 5 && specification.Run.User[:5] == "name:" {
-		targetUser, err := user.Lookup(specification.Run.User[5:])
-		if err != nil {
-			return executionMetadata, fmt.Errorf("Error looking up user with given username (%s): %s", specification.Run.User[5:], err)
-		}
-		containerConfig.User = targetUser.Uid
-	} else {
-		containerConfig.User = specification.Run.User
-	}
+	containerConfig.User = specification.Run.User
 
 	hostConfig := &dockerContainer.HostConfig{
 		Mounts: make([]dockerMount.Mount, len(inverseMounts)),
