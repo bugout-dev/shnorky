@@ -26,25 +26,41 @@ var ValidMountMethods = map[string]dockerMount.Type{
 	"tmpfs":  dockerMount.TypeTmpfs,
 }
 
+// MaterializeMountConfiguration validates the members of its input mount configuration, applies
+// the required substitutions, and returns the resulting values in a new MountConfiguration struct.
+func MaterializeMountConfiguration(rawConfig MountConfiguration) (MountConfiguration, error) {
+	materializedConfig := MountConfiguration{
+		Source: MaterializeEnv(rawConfig.Source),
+		Target: rawConfig.Target,
+		Method: rawConfig.Method,
+	}
+	if _, ok := ValidMountMethods[materializedConfig.Method]; !ok {
+		return materializedConfig, ErrInvalidMountMethod
+	}
+	return materializedConfig, nil
+}
+
 // ReadMountConfiguration reads a single MountConfiguration JSON document from the given reader,
 // validates it, and returns it as a MountConfiguration struct. Returns error (in the error
 // position) if the MountConfiguration document is invalid or if there is an error reading it from
-// the reader.
+// the reader. If an error is returned, the offending mount configuration object is returned in a
+// singleton array.
 func ReadMountConfiguration(reader io.Reader) ([]MountConfiguration, error) {
 	dec := json.NewDecoder(reader)
 	dec.DisallowUnknownFields()
 
-	var mountConfigurations []MountConfiguration
-	err := dec.Decode(&mountConfigurations)
+	var rawMountConfigurations []MountConfiguration
+	err := dec.Decode(&rawMountConfigurations)
 	if err != nil {
 		return []MountConfiguration{}, err
 	}
 
-	// TODO(nkashy1): Factor this validation out into a separate function so that it can be reused
-	// in the flows package equivalent to this function.
-	for _, mountConfiguration := range mountConfigurations {
-		if _, ok := ValidMountMethods[mountConfiguration.Method]; !ok {
-			return mountConfigurations, ErrInvalidMountMethod
+	mountConfigurations := make([]MountConfiguration, len(rawMountConfigurations))
+	for i, rawConfig := range rawMountConfigurations {
+		materializedConfig, err := MaterializeMountConfiguration(rawConfig)
+		mountConfigurations[i] = materializedConfig
+		if err != nil {
+			return []MountConfiguration{materializedConfig}, err
 		}
 	}
 
