@@ -138,6 +138,9 @@ func TestSingleComponent(t *testing.T) {
 		t.Fatalf("Error parsing test timeout from SHNORKY_TEST_TIMEOUT environment variable: %s", testTimeoutRaw)
 	}
 	for i := 0; i < int(testTimeout); i++ {
+		if i == int(testTimeout) {
+			t.Fatalf("Test timed out after %d seconds", int(testTimeout))
+		}
 		time.Sleep(time.Second)
 		info, err := dockerClient.ContainerInspect(ctx, execution.ID)
 		if err != nil {
