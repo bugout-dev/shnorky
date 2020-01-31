@@ -2,6 +2,8 @@ package flows
 
 import (
 	"testing"
+
+	"github.com/simiotics/shnorky/components"
 )
 
 func TestCalculateStages(t *testing.T) {
@@ -229,6 +231,15 @@ func TestMaterializeSpecification(t *testing.T) {
 				Dependencies: map[string][]string{
 					"b": {"a"},
 				},
+				Mounts: map[string][]components.MountConfiguration{
+					"a": {
+						{
+							Source: "/tmp/temp.txt",
+							Target: "/input.txt",
+							Method: "bind",
+						},
+					},
+				},
 			},
 			expectedSpecification: FlowSpecification{
 				Steps: map[string]string{
@@ -239,6 +250,15 @@ func TestMaterializeSpecification(t *testing.T) {
 					"b": {"a"},
 				},
 				Stages: [][]string{{"a"}, {"b"}},
+				Mounts: map[string][]components.MountConfiguration{
+					"a": {
+						{
+							Source: "/tmp/temp.txt",
+							Target: "/input.txt",
+							Method: "bind",
+						},
+					},
+				},
 			},
 			returnsError: false,
 		},
@@ -344,6 +364,50 @@ func TestMaterializeSpecification(t *testing.T) {
 					if dep != expectedDeps[j] {
 						t.Errorf("[Test %d] Mismatch in dependencies for step (%s) at position %d: expected=%s, actual=%s", i, step, j, dep, expectedDeps[j])
 					}
+				}
+			}
+		}
+
+		if len(specification.Stages) != len(testCase.expectedSpecification.Stages) {
+			t.Errorf("[Test %d] Unexpected number of stages: expected=%d, actual=%d", i, len(testCase.expectedSpecification.Stages), len(specification.Stages))
+			break
+		}
+		for j, stage := range specification.Stages {
+			if len(stage) != len(testCase.expectedSpecification.Stages[j]) {
+				t.Errorf("[Test %d] Unexpected number of steps in stage %d: expected=%d, actual=%d", i, j, len(testCase.expectedSpecification.Stages[j]), len(stage))
+				break
+			}
+			for k, step := range stage {
+				if step != testCase.expectedSpecification.Stages[j][k] {
+					t.Errorf("[Test %d] Stage %d: Mismatch in step %d - expected=%s, actual=%s", i, j, k, testCase.expectedSpecification.Stages[j][k], step)
+				}
+			}
+		}
+
+		if len(specification.Mounts) != len(testCase.expectedSpecification.Mounts) {
+			t.Errorf("[Test %d] Unexpected number of mounts: expected=%d, actual=%d", i, len(testCase.expectedSpecification.Mounts), len(specification.Mounts))
+			break
+		}
+		for step, mounts := range specification.Mounts {
+			expectedMounts, ok := testCase.expectedSpecification.Mounts[step]
+			if !ok {
+				t.Errorf("[Test %d] Unexpected step indexed in mounts: %s", i, step)
+				break
+			}
+			if len(mounts) != len(expectedMounts) {
+				t.Errorf("[Test %d] Unexpected number of mounts for step %s: expected=%d, actual=%d", i, step, len(expectedMounts), len(mounts))
+				break
+			}
+			for j, mount := range mounts {
+				expectedMount := expectedMounts[j]
+				if mount.Source != expectedMount.Source {
+					t.Errorf("[Test %d] Step %s, mount %d - mismatched sources: expected=%s, actual=%s", i, step, j, expectedMount.Source, mount.Source)
+				}
+				if mount.Target != expectedMount.Target {
+					t.Errorf("[Test %d] Step %s, mount %d - mismatched targets: expected=%s, actual=%s", i, step, j, expectedMount.Target, mount.Target)
+				}
+				if mount.Method != expectedMount.Method {
+					t.Errorf("[Test %d] Step %s, mount %d - mismatched methods: expected=%s, actual=%s", i, step, j, expectedMount.Method, mount.Method)
 				}
 			}
 		}
