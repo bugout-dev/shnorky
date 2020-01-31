@@ -441,12 +441,7 @@ and build and execute flows).
 
 			ctx := context.Background()
 
-			mounts, err := flows.ReadMountConfiguration(strings.NewReader(mountConfig))
-			if err != nil {
-				log.WithField("error", err).Fatal("Error reading mount configuration")
-			}
-
-			executions, err := flows.Execute(ctx, db, dockerClient, id, mounts)
+			executions, err := flows.Execute(ctx, db, dockerClient, id)
 			if err != nil {
 				log.WithField("error", err).Fatal("Could not execute flow")
 			}
@@ -456,7 +451,6 @@ and build and execute flows).
 	}
 
 	executeFlowCommand.Flags().StringVarP(&id, "id", "i", "", "ID of the flow being executed")
-	executeFlowCommand.Flags().StringVarP(&mountConfig, "mounts", "m", "", "JSON string specifying mount configuration for flow")
 
 	flowsCommand.AddCommand(createFlowCommand, buildFlowCommand, executeFlowCommand)
 

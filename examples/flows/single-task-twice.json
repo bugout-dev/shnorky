@@ -5,5 +5,31 @@
     },
     "dependencies": {
         "second": ["first"]
+    },
+    "mounts": {
+        "first": [
+            {
+                "source": "env:SHNORKY_TEST_INPUT",
+                "target": "/shnorky/inputs.txt",
+                "method": "bind"
+            },
+            {
+                "source": "env:SHNORKY_TEST_INTERMEDIATE",
+                "target": "/shnorky/outputs.txt",
+                "method": "bind"
+            }
+        ],
+        "second": [
+            {
+                "source": "env:SHNORKY_TEST_INTERMEDIATE",
+                "target": "/shnorky/inputs.txt",
+                "method": "bind"
+            },
+            {
+                "source": "env:SHNORKY_TEST_OUTPUT",
+                "target": "/shnorky/outputs.txt",
+                "method": "bind"
+            }
+        ]
     }
 }

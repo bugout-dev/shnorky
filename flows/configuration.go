@@ -14,10 +14,23 @@ func ReadMountConfiguration(reader io.Reader) (map[string][]components.MountConf
 	dec := json.NewDecoder(reader)
 	dec.DisallowUnknownFields()
 
-	var mountConfigurations map[string][]components.MountConfiguration
-	err := dec.Decode(&mountConfigurations)
+	var rawMountConfigurations map[string][]components.MountConfiguration
+	err := dec.Decode(&rawMountConfigurations)
 	if err != nil {
 		return map[string][]components.MountConfiguration{}, err
+	}
+
+	mountConfigurations := map[string][]components.MountConfiguration{}
+	for step, rawConfigs := range rawMountConfigurations {
+		materializedConfigs := make([]components.MountConfiguration, len(rawConfigs))
+		for i, rawConfig := range rawConfigs {
+			materializedConfig, err := components.MaterializeMountConfiguration(rawConfig)
+			if err != nil {
+				return map[string][]components.MountConfiguration{step: {materializedConfig}}, err
+			}
+			materializedConfigs[i] = materializedConfig
+		}
+		mountConfigurations[step] = materializedConfigs
 	}
 
 	return mountConfigurations, nil
