@@ -113,7 +113,6 @@ func Execute(
 	db *sql.DB,
 	dockerClient *docker.Client,
 	flowID string,
-	mounts map[string][]components.MountConfiguration,
 ) (map[string]components.ExecutionMetadata, error) {
 	flow, err := SelectFlowByID(db, flowID)
 	if err != nil {
@@ -149,7 +148,7 @@ func Execute(
 	for _, stage := range stages {
 		stepExecutions := map[string]components.ExecutionMetadata{}
 		for _, step := range stage {
-			executionMetadata, err := components.Execute(ctx, db, dockerClient, buildIDs[step], flowID, mounts[step])
+			executionMetadata, err := components.Execute(ctx, db, dockerClient, buildIDs[step], flowID, specification.Mounts[step])
 			if err != nil {
 				return componentExecutions, err
 			}

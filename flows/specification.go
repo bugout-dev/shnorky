@@ -20,7 +20,7 @@ type FlowSpecification struct {
 	// can be run in parallel.
 	Stages [][]string `json:"stages,omitempty"`
 	// Mounts maps each step (by name) to mount configurations for its corresponding component
-	Mounts map[string][]components.MountConfiguration
+	Mounts map[string][]components.MountConfiguration `json:"mounts"`
 }
 
 // MaterializeFlowSpecification takes a raw FlowSpecification struct and returns a materialized one

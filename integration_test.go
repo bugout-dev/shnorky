@@ -114,12 +114,12 @@ func TestSingleComponent(t *testing.T) {
 	mounts := []components.MountConfiguration{
 		{
 			Source: inputFile.Name(),
-			Target: "/shnorky/inputs/inputs.txt",
+			Target: "/shnorky/inputs.txt",
 			Method: "bind",
 		},
 		{
 			Source: outputFile.Name(),
-			Target: "/shnorky/outputs/outputs.txt",
+			Target: "/shnorky/outputs.txt",
 			Method: "bind",
 		},
 	}
@@ -283,11 +283,8 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 
 	}
 
-	// Mount configuration. The values here come from different specification files in the examples
-	// directory. The values here should reflect the values there - the specification files are the
-	// major source of truth:
-	// 1. Step names come from examples/flows/single-task-twice.json
-	// 2. Component mount paths come from examples/components/single-task/component.json
+	// Mount configuration by environment. The names of the environment variables come from:
+	// examples/flows/single-task-twice.json
 	inputFile, err := ioutil.TempFile("", "")
 	if err != nil {
 		t.Fatalf("Error creating temporary file to mount as flow input: %s", err.Error())
@@ -308,34 +305,20 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 	}
 	defer os.Remove(outputFile.Name())
 
-	stepMounts := map[string][]components.MountConfiguration{
-		"first": {
-			{
-				Source: inputFile.Name(),
-				Target: "/shnorky/inputs/inputs.txt",
-				Method: "bind",
-			},
-			{
-				Source: intermediateFile.Name(),
-				Target: "/shnorky/outputs/outputs.txt",
-				Method: "bind",
-			},
-		},
-		"second": {
-			{
-				Source: intermediateFile.Name(),
-				Target: "/shnorky/inputs/inputs.txt",
-				Method: "bind",
-			},
-			{
-				Source: outputFile.Name(),
-				Target: "/shnorky/outputs/outputs.txt",
-				Method: "bind",
-			},
-		},
+	err = os.Setenv("SHNORKY_TEST_INPUT", inputFile.Name())
+	if err != nil {
+		t.Fatal("Could not set SHNORKY_TEST_INPUT environment variable")
+	}
+	err = os.Setenv("SHNORKY_TEST_INTERMEDIATE", intermediateFile.Name())
+	if err != nil {
+		t.Fatal("Could not set SHNORKY_TEST_INTERMEDIATE environment variable")
+	}
+	err = os.Setenv("SHNORKY_TEST_OUTPUT", outputFile.Name())
+	if err != nil {
+		t.Fatal("Could not set SHNORKY_TEST_OUTPUT environment variable")
 	}
 
-	flowExecutions, err := flows.Execute(ctx, db, dockerClient, flow.ID, stepMounts)
+	flowExecutions, err := flows.Execute(ctx, db, dockerClient, flow.ID)
 	for _, stepExecution := range flowExecutions {
 		defer dockerClient.ContainerRemove(ctx, stepExecution.ID, dockerTypes.ContainerRemoveOptions{})
 	}
