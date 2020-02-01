@@ -1,20 +1,20 @@
 package components
 
 import (
-	"archive/tar"
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/builder/dockerignore"
 	docker "github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/archive"
 )
 
 // DockerImagePrefix is the prefix that shnorky attaches to each docker image name
@@ -67,62 +67,35 @@ func CreateBuild(ctx context.Context, db *sql.DB, dockerClient *docker.Client, o
 
 	context := filepath.Join(componentMetadata.ComponentPath, specification.Build.Context)
 
-	tarfile, err := ioutil.TempFile("", "*.tar")
-	if err != nil {
-		return buildMetadata, fmt.Errorf("Error creating context tarfile: %s", err)
+	tarOptions := archive.TarOptions{
+		Compression: archive.Uncompressed,
 	}
-	defer os.Remove(tarfile.Name())
-
-	tarWriter := tar.NewWriter(tarfile)
-
-	err = filepath.Walk(context, func(targetPath string, info os.FileInfo, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
+	dockerignoreFilePath := filepath.Join(context, ".dockerignore")
+	dockerignoreInfo, dockerignoreErr := os.Stat(dockerignoreFilePath)
+	if !os.IsNotExist(dockerignoreErr) {
+		if dockerignoreErr != nil {
+			return buildMetadata, fmt.Errorf("Error checking dockerignore file (%s): %s", dockerignoreFilePath, err.Error())
 		}
 
-		if info.IsDir() {
-			return nil
+		if !dockerignoreInfo.IsDir() {
+			dockerignoreFile, err := os.Open(dockerignoreFilePath)
+			if err != nil {
+				return buildMetadata, fmt.Errorf("Error opening dockerignore file (%s): %s", dockerignoreFilePath, err.Error())
+			}
+			defer dockerignoreFile.Close()
+
+			excludePatterns, err := dockerignore.ReadAll(dockerignoreFile)
+			if err != nil {
+				return buildMetadata, fmt.Errorf("Could not read exclude patterns from dockerignore file (%s): %s", dockerignoreFilePath, err.Error())
+			}
+
+			tarOptions.ExcludePatterns = excludePatterns
 		}
-
-		target, tarErr := os.Open(targetPath)
-		if tarErr != nil {
-			return tarErr
-		}
-		defer target.Close()
-
-		contextPath, tarErr := filepath.Rel(context, targetPath)
-		if tarErr != nil {
-			return tarErr
-		}
-
-		header := &tar.Header{
-			Name:    contextPath,
-			Size:    info.Size(),
-			Mode:    int64(info.Mode()),
-			ModTime: info.ModTime(),
-		}
-
-		tarErr = tarWriter.WriteHeader(header)
-		if tarErr != nil {
-			return tarErr
-		}
-
-		_, tarErr = io.Copy(tarWriter, target)
-
-		return tarErr
-	})
-	if err != nil {
-		return buildMetadata, fmt.Errorf("Error building context tarfile: %s", err.Error())
 	}
 
-	err = tarWriter.Close()
+	buildContext, err := archive.TarWithOptions(context, &tarOptions)
 	if err != nil {
-		return buildMetadata, fmt.Errorf("Error closing context tarfile: %s", err.Error())
-	}
-
-	buildContext, err := os.Open(tarfile.Name())
-	if err != nil {
-		return buildMetadata, fmt.Errorf("Could not reopen context tarfile: %s", err.Error())
+		return buildMetadata, fmt.Errorf("Could not archive context: %s", err.Error())
 	}
 	defer buildContext.Close()
 
