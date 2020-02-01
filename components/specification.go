@@ -59,7 +59,7 @@ type RunSpecification struct {
 	// Special values:
 	// "" - container runs as root
 	// "env:<VARIABLE_NAME>" - container runs as user specified by environment variable; use
-	// "env:USER" to use the user running the current shnorky process, for example
+	// "env:UID" to use the user running the current shnorky process, for example
 	// "user:<username>" - container runs as the user with the given username
 	User string `json:"user"`
 }
