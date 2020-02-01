@@ -68,6 +68,10 @@ func generateDockerClient() *docker.Client {
 	if err != nil {
 		log.WithField("error", err).Fatal("Error creating docker client")
 	}
+
+	ctx := context.Background()
+	client.NegotiateAPIVersion(ctx)
+
 	return client
 }
 
