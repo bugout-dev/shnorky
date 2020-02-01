@@ -1,0 +1,8 @@
+language: go
+go:
+  - 1.13
+services:
+  - docker
+env:
+  - GO111MODULE=on
+script: make test
