@@ -146,10 +146,20 @@ func MaterializeRunSpecification(rawSpecification RunSpecification) (RunSpecific
 		materializedEnv[key] = MaterializeEnv(value)
 	}
 
+	materializedEntrypoint := make([]string, len(rawSpecification.Entrypoint))
+	for i, value := range rawSpecification.Entrypoint {
+		materializedEntrypoint[i] = MaterializeEnv(value)
+	}
+
+	materializedCmd := make([]string, len(rawSpecification.Cmd))
+	for i, value := range rawSpecification.Cmd {
+		materializedCmd[i] = MaterializeEnv(value)
+	}
+
 	materializedSpecification := RunSpecification{
 		Env:         materializedEnv,
-		Entrypoint:  rawSpecification.Entrypoint,
-		Cmd:         rawSpecification.Cmd,
+		Entrypoint:  materializedEntrypoint,
+		Cmd:         materializedCmd,
 		Mountpoints: rawSpecification.Mountpoints,
 		User:        materializedUser,
 	}
