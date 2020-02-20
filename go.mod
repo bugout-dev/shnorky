@@ -17,7 +17,7 @@ require (
 	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.4.2
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v0.0.6
 	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa // indirect
 	golang.org/x/sys v0.0.0-20200113162924-86b910548bc1 // indirect
 	google.golang.org/grpc v1.26.0 // indirect
