@@ -31,5 +31,13 @@
                 "method": "bind"
             }
         ]
+    },
+    "env": {
+        "first": {
+            "MY_ENV": "hello"
+        },
+        "second": {
+            "MY_ENV": "goodbye"
+        }
     }
 }

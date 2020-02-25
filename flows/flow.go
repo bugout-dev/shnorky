@@ -148,7 +148,7 @@ func Execute(
 	for _, stage := range stages {
 		stepExecutions := map[string]components.ExecutionMetadata{}
 		for _, step := range stage {
-			executionMetadata, err := components.Execute(ctx, db, dockerClient, buildIDs[step], flowID, specification.Mounts[step])
+			executionMetadata, err := components.Execute(ctx, db, dockerClient, buildIDs[step], flowID, specification.Mounts[step], specification.Env[step])
 			if err != nil {
 				return componentExecutions, err
 			}

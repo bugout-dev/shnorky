@@ -124,7 +124,7 @@ func TestSingleComponent(t *testing.T) {
 		},
 	}
 
-	execution, err := components.Execute(ctx, db, dockerClient, build.ID, "", mounts)
+	execution, err := components.Execute(ctx, db, dockerClient, build.ID, "", mounts, map[string]string{})
 	if err != nil {
 		t.Fatalf("Error executing build (%s): %s", build.ID, err.Error())
 	}
@@ -328,7 +328,6 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 
 	// expectedLine is the value for the MY_ENV variable in the component specification in:
 	// examples/components/single-task/component.json
-	expectedLine := "hello world"
 	scanner := bufio.NewScanner(outputFile)
 	defer outputFile.Close()
 	more := scanner.Scan()
@@ -336,8 +335,8 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 		t.Fatal("Not enough lines in output file")
 	}
 	line := scanner.Text()
-	if line != expectedLine {
-		t.Fatalf("Incorrect value in output file: expected=\"%s\", actual=\"%s\"", expectedLine, line)
+	if line != "hello" {
+		t.Fatalf("Incorrect value in output file: expected=\"%s\", actual=\"%s\"", "hello", line)
 	}
 
 	more = scanner.Scan()
@@ -345,8 +344,8 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 		t.Fatal("Not enough lines in output file")
 	}
 	line = scanner.Text()
-	if line != expectedLine {
-		t.Fatalf("Incorrect value in output file: expected=\"%s\", actual=\"%s\"", expectedLine, line)
+	if line != "goodbye" {
+		t.Fatalf("Incorrect value in output file: expected=\"%s\", actual=\"%s\"", "goodbye", line)
 	}
 
 	terminating := 0

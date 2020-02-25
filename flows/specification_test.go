@@ -240,6 +240,11 @@ func TestMaterializeSpecification(t *testing.T) {
 						},
 					},
 				},
+				Env: map[string]map[string]string{
+					"a": {
+						"key-1": "value-1",
+					},
+				},
 			},
 			expectedSpecification: FlowSpecification{
 				Steps: map[string]string{
@@ -257,6 +262,11 @@ func TestMaterializeSpecification(t *testing.T) {
 							Target: "/input.txt",
 							Method: "bind",
 						},
+					},
+				},
+				Env: map[string]map[string]string{
+					"a": {
+						"key-1": "value-1",
 					},
 				},
 			},
