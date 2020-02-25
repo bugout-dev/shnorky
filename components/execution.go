@@ -58,6 +58,7 @@ func Execute(
 	buildID string,
 	flowID string,
 	mounts []MountConfiguration,
+	env map[string]string,
 ) (ExecutionMetadata, error) {
 	inverseMounts := map[string]int{}
 	for i, mountConfig := range mounts {
@@ -98,7 +99,17 @@ func Execute(
 
 	containerConfig.Env = make([]string, len(specification.Run.Env))
 	i := 0
+	// finalEnv is formed by merging the env argument to this function over the env specified
+	// in the component specification. This determines the environment variables that get set
+	// for the execution container.
+	finalEnv := map[string]string{}
 	for key, value := range specification.Run.Env {
+		finalEnv[key] = value
+	}
+	for key, value := range env {
+		finalEnv[key] = value
+	}
+	for key, value := range finalEnv {
 		containerConfig.Env[i] = fmt.Sprintf("%s=%s", key, value)
 		i++
 	}

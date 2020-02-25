@@ -21,6 +21,10 @@ type FlowSpecification struct {
 	Stages [][]string `json:"stages,omitempty"`
 	// Mounts maps each step (by name) to mount configurations for its corresponding component
 	Mounts map[string][]components.MountConfiguration `json:"mounts"`
+	// Env maps each step (by name) to environment variable mappings (key-value mappings of variable
+	// name to variable value) for that step. The environment variable values get materialized
+	// following the same rules as values in a component runtime specification.
+	Env map[string]map[string]string `json:"env,omitempty"`
 }
 
 // MaterializeFlowSpecification takes a raw FlowSpecification struct and returns a materialized one
@@ -75,6 +79,16 @@ func MaterializeFlowSpecification(rawSpecification FlowSpecification) (FlowSpeci
 		materializedMounts[step] = materializedConfigs
 	}
 	materializedSpecification.Mounts = materializedMounts
+
+	materializedEnv := map[string]map[string]string{}
+	for step, envMap := range rawSpecification.Env {
+		materializedEnvMap := map[string]string{}
+		for key, value := range envMap {
+			materializedEnvMap[key] = components.MaterializeEnv(value)
+		}
+		materializedEnv[step] = materializedEnvMap
+	}
+	materializedSpecification.Env = materializedEnv
 
 	return materializedSpecification, nil
 }

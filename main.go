@@ -338,7 +338,7 @@ unwanted components from your shnorky state, and build and execute components).
 				log.WithField("error", err).Fatal("Error reading mount configuration")
 			}
 
-			executionMetadata, err := components.Execute(ctx, db, dockerClient, id, "", mounts)
+			executionMetadata, err := components.Execute(ctx, db, dockerClient, id, "", mounts, map[string]string{})
 			if err != nil {
 				log.WithField("error", err).Fatal("Could not execute build")
 			}
