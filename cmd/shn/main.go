@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -11,69 +10,19 @@ import (
 	"strings"
 	"sync"
 
-	docker "github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/simiotics/shnorky/components"
 	"github.com/simiotics/shnorky/flows"
+	"github.com/simiotics/shnorky/internal"
 	"github.com/simiotics/shnorky/state"
 )
-
-// logLevels - mapping between log level specification strings and logrus Level values
-var logLevels = map[string]logrus.Level{
-	"TRACE": logrus.TraceLevel,
-	"DEBUG": logrus.DebugLevel,
-	"INFO":  logrus.InfoLevel,
-	"WARN":  logrus.WarnLevel,
-	"ERROR": logrus.ErrorLevel,
-	"FATAL": logrus.FatalLevel,
-	"PANIC": logrus.PanicLevel,
-}
-
-// Accepts the following environment variables:
-// + LOG_LEVEL (value should be one of TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC)
-func generateLogger() *logrus.Logger {
-	log := logrus.New()
-
-	rawLevel := os.Getenv("LOG_LEVEL")
-	if rawLevel == "" {
-		rawLevel = "WARN"
-	}
-	level, ok := logLevels[rawLevel]
-	if !ok {
-		log.Fatalf("Invalid value for LOG_LEVEL environment variable: %s. Choose one of TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC", rawLevel)
-	}
-	log.SetLevel(level)
-
-	return log
-}
 
 // Version denotes the current version of the shnorky tool and library
 var Version = "0.1.0-dev"
 
-var log = generateLogger()
-
-func openStateDB(stateDir string) *sql.DB {
-	stateDBPath := path.Join(stateDir, state.DBFileName)
-	db, err := sql.Open("sqlite3", stateDBPath)
-	if err != nil {
-		log.WithFields(logrus.Fields{"stateDBPath": stateDBPath, "error": err}).Fatal("Error opening state database")
-	}
-	return db
-}
-
-func generateDockerClient() *docker.Client {
-	client, err := docker.NewEnvClient()
-	if err != nil {
-		log.WithField("error", err).Fatal("Error creating docker client")
-	}
-
-	ctx := context.Background()
-	client.NegotiateAPIVersion(ctx)
-
-	return client
-}
+var log = internal.GenerateLogger()
 
 func main() {
 	defaultStateDir := ".shn"
@@ -178,7 +127,7 @@ unwanted components from your shnorky state, and build and execute components).
 			)
 
 			logger.Debug("Opening state database")
-			db := openStateDB(stateDir)
+			db := internal.OpenStateDB(stateDir, log)
 			defer db.Close()
 
 			logger.Debug("Adding component to state database")
@@ -212,7 +161,7 @@ unwanted components from your shnorky state, and build and execute components).
 		Run: func(cmd *cobra.Command, args []string) {
 			var wg sync.WaitGroup
 			componentsChan := make(chan components.ComponentMetadata)
-			db := openStateDB(stateDir)
+			db := internal.OpenStateDB(stateDir, log)
 			defer db.Close()
 
 			wg.Add(1)
@@ -246,7 +195,7 @@ unwanted components from your shnorky state, and build and execute components).
 		Short: "Remove a component from shnorky",
 		Long:  "Removes a component registered against shnorky from the state database",
 		Run: func(cmd *cobra.Command, args []string) {
-			db := openStateDB(stateDir)
+			db := internal.OpenStateDB(stateDir, log)
 			defer db.Close()
 			err := components.RemoveComponent(db, id)
 			if err != nil {
@@ -264,10 +213,10 @@ unwanted components from your shnorky state, and build and execute components).
 		Short: "Create a build for a specific component",
 		Long:  "Creates an image for the specified component using its current state on the filesystem",
 		Run: func(cmd *cobra.Command, args []string) {
-			db := openStateDB(stateDir)
+			db := internal.OpenStateDB(stateDir, log)
 			defer db.Close()
 
-			dockerClient := generateDockerClient()
+			dockerClient := internal.GenerateDockerClient(log)
 
 			ctx := context.Background()
 
@@ -290,7 +239,7 @@ unwanted components from your shnorky state, and build and execute components).
 
 			var wg sync.WaitGroup
 			buildsChan := make(chan components.BuildMetadata)
-			db := openStateDB(stateDir)
+			db := internal.OpenStateDB(stateDir, log)
 			defer db.Close()
 
 			wg.Add(1)
@@ -326,10 +275,10 @@ unwanted components from your shnorky state, and build and execute components).
 		Short: "Execute a build for a specific component",
 		Long:  "Creates a container for the given build and registers the container in the state database",
 		Run: func(cmd *cobra.Command, args []string) {
-			db := openStateDB(stateDir)
+			db := internal.OpenStateDB(stateDir, log)
 			defer db.Close()
 
-			dockerClient := generateDockerClient()
+			dockerClient := internal.GenerateDockerClient(log)
 
 			ctx := context.Background()
 
@@ -385,7 +334,7 @@ and build and execute flows).
 			)
 
 			logger.Debug("Opening state database")
-			db := openStateDB(stateDir)
+			db := internal.OpenStateDB(stateDir, log)
 			defer db.Close()
 
 			logger.Debug("Adding component to state database")
@@ -412,10 +361,10 @@ and build and execute flows).
 		Short: "Build all components in a flow",
 		Long:  "Creates a build for each distinct component in the given flow",
 		Run: func(cmd *cobra.Command, args []string) {
-			db := openStateDB(stateDir)
+			db := internal.OpenStateDB(stateDir, log)
 			defer db.Close()
 
-			dockerClient := generateDockerClient()
+			dockerClient := internal.GenerateDockerClient(log)
 
 			ctx := context.Background()
 
@@ -438,10 +387,10 @@ and build and execute flows).
 		Short: "Execute a shnorky flow",
 		Long:  "Executes a shnorky flow",
 		Run: func(cmd *cobra.Command, args []string) {
-			db := openStateDB(stateDir)
+			db := internal.OpenStateDB(stateDir, log)
 			defer db.Close()
 
-			dockerClient := generateDockerClient()
+			dockerClient := internal.GenerateDockerClient(log)
 
 			ctx := context.Background()
 

@@ -17,10 +17,13 @@ import (
 
 	"github.com/simiotics/shnorky/components"
 	"github.com/simiotics/shnorky/flows"
+	"github.com/simiotics/shnorky/internal"
 	"github.com/simiotics/shnorky/state"
 )
 
 func TestSingleComponent(t *testing.T) {
+	log := internal.GenerateLogger()
+
 	stateDir, err := ioutil.TempDir("", "shnorky-TestSingleComponent-")
 	if err != nil {
 		t.Fatalf("Could not create directory to hold Shnorky state: %s", err.Error())
@@ -69,7 +72,7 @@ func TestSingleComponent(t *testing.T) {
 		t.Fatalf("Unexpected component path: expected=%s, actual=%s", specificationPath, component.SpecificationPath)
 	}
 
-	dockerClient := generateDockerClient()
+	dockerClient := internal.GenerateDockerClient(log)
 	ctx := context.Background()
 
 	build, err := components.CreateBuild(ctx, db, dockerClient, ioutil.Discard, component.ID)
@@ -199,6 +202,8 @@ func TestSingleComponent(t *testing.T) {
 }
 
 func TestFlowSingleTaskTwice(t *testing.T) {
+	log := internal.GenerateLogger()
+
 	stateDir, err := ioutil.TempDir("", "shnorky-TestFlowSingleTaskTwice-")
 	if err != nil {
 		t.Fatalf("Could not create directory to hold Shnorky state: %s", err.Error())
@@ -265,7 +270,7 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 		t.Fatalf("Unexpected flow ID: expected=%s, actual=%s", absoluteFlowSpecificationPath, flow.SpecificationPath)
 	}
 
-	dockerClient := generateDockerClient()
+	dockerClient := internal.GenerateDockerClient(log)
 	ctx := context.Background()
 
 	flowBuilds, err := flows.Build(ctx, db, dockerClient, ioutil.Discard, flow.ID)
