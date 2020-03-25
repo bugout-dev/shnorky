@@ -13,6 +13,6 @@ clean:
 	rm shn
 
 shn:
-	CGO_ENABLED=1 go build -o shn $(cli_args) .
+	CGO_ENABLED=1 go build $(cli_args) ./cmd/shn/...
 
 .PHONY: build test format clean

@@ -1,4 +1,4 @@
-package shn
+package main
 
 import (
 	"context"
