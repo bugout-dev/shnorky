@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 
 	docker "github.com/docker/docker/client"
@@ -51,16 +52,21 @@ func GenerateFlowMetadata(id, specificationPath string) (FlowMetadata, error) {
 // specification at the given path first.
 // This is the handler for `shnorky flows add`
 func AddFlow(db *sql.DB, id, specificationPath string) (FlowMetadata, error) {
-	specFile, err := os.Open(specificationPath)
+	absoluteSpecificationPath, err := filepath.Abs(specificationPath)
 	if err != nil {
-		return FlowMetadata{}, fmt.Errorf("Error opening specification file (%s): %s", specificationPath, err.Error())
+		return FlowMetadata{}, err
+	}
+
+	specFile, err := os.Open(absoluteSpecificationPath)
+	if err != nil {
+		return FlowMetadata{}, fmt.Errorf("Error opening specification file (%s): %s", absoluteSpecificationPath, err.Error())
 	}
 	_, err = ReadSingleSpecification(specFile)
 	if err != nil {
-		return FlowMetadata{}, fmt.Errorf("Error reading specification (%s): %s", specificationPath, err.Error())
+		return FlowMetadata{}, fmt.Errorf("Error reading specification (%s): %s", absoluteSpecificationPath, err.Error())
 	}
 
-	metadata, err := GenerateFlowMetadata(id, specificationPath)
+	metadata, err := GenerateFlowMetadata(id, absoluteSpecificationPath)
 	if err != nil {
 		return metadata, err
 	}
