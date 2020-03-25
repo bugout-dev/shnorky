@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -41,7 +42,15 @@ func TestSingleComponent(t *testing.T) {
 
 	componentID := "test-component"
 	componentPath := "examples/components/single-task"
+	absoluteComponentPath, err := filepath.Abs(componentPath)
+	if err != nil {
+		t.Fatalf("Could not resolve absolute path for file: %s - %s", componentPath, err.Error())
+	}
 	specificationPath := "examples/components/single-task/component.json"
+	absoluteSpecificationPath, err := filepath.Abs(specificationPath)
+	if err != nil {
+		t.Fatalf("Could not resolve absolute path for file: %s - %s", specificationPath, err.Error())
+	}
 	component, err := components.AddComponent(db, componentID, components.Task, componentPath, specificationPath)
 	if err != nil {
 		t.Fatalf("Error registering component: %s", err.Error())
@@ -53,10 +62,10 @@ func TestSingleComponent(t *testing.T) {
 	if component.ComponentType != components.Task {
 		t.Fatalf("Unexpected component type: expected=%s, actual=%s", components.Task, component.ComponentType)
 	}
-	if component.ComponentPath != componentPath {
+	if component.ComponentPath != absoluteComponentPath {
 		t.Fatalf("Unexpected component path: expected=%s, actual=%s", componentPath, component.ComponentPath)
 	}
-	if component.SpecificationPath != specificationPath {
+	if component.SpecificationPath != absoluteSpecificationPath {
 		t.Fatalf("Unexpected component path: expected=%s, actual=%s", specificationPath, component.SpecificationPath)
 	}
 
@@ -211,7 +220,15 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 
 	componentID := "single-task"
 	componentPath := "examples/components/single-task"
+	absoluteComponentPath, err := filepath.Abs(componentPath)
+	if err != nil {
+		t.Fatalf("Could not resolve absolute path for file: %s - %s", componentPath, err.Error())
+	}
 	specificationPath := "examples/components/single-task/component.json"
+	absoluteSpecificationPath, err := filepath.Abs(specificationPath)
+	if err != nil {
+		t.Fatalf("Could not resolve absolute path for file: %s - %s", specificationPath, err.Error())
+	}
 	component, err := components.AddComponent(db, componentID, components.Task, componentPath, specificationPath)
 	if err != nil {
 		t.Fatalf("Error registering component: %s", err.Error())
@@ -223,15 +240,19 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 	if component.ComponentType != components.Task {
 		t.Fatalf("Unexpected component type: expected=%s, actual=%s", components.Task, component.ComponentType)
 	}
-	if component.ComponentPath != componentPath {
-		t.Fatalf("Unexpected component path: expected=%s, actual=%s", componentPath, component.ComponentPath)
+	if component.ComponentPath != absoluteComponentPath {
+		t.Fatalf("Unexpected component path: expected=%s, actual=%s", absoluteComponentPath, component.ComponentPath)
 	}
-	if component.SpecificationPath != specificationPath {
-		t.Fatalf("Unexpected component path: expected=%s, actual=%s", specificationPath, component.SpecificationPath)
+	if component.SpecificationPath != absoluteSpecificationPath {
+		t.Fatalf("Unexpected component path: expected=%s, actual=%s", absoluteSpecificationPath, component.SpecificationPath)
 	}
 
 	flowID := "flow-single-task-twice"
 	flowSpecificationPath := "examples/flows/single-task-twice.json"
+	absoluteFlowSpecificationPath, err := filepath.Abs(flowSpecificationPath)
+	if err != nil {
+		t.Fatalf("Could not resolve absolute path for file: %s - %s", flowSpecificationPath, err.Error())
+	}
 	flow, err := flows.AddFlow(db, flowID, flowSpecificationPath)
 	if err != nil {
 		t.Fatalf("Error registering flow: %s", err.Error())
@@ -240,8 +261,8 @@ func TestFlowSingleTaskTwice(t *testing.T) {
 	if flow.ID != flowID {
 		t.Fatalf("Unexpected flow ID: expected=%s, actual=%s", flowID, flow.ID)
 	}
-	if flow.SpecificationPath != flowSpecificationPath {
-		t.Fatalf("Unexpected flow ID: expected=%s, actual=%s", flowSpecificationPath, flow.SpecificationPath)
+	if flow.SpecificationPath != absoluteFlowSpecificationPath {
+		t.Fatalf("Unexpected flow ID: expected=%s, actual=%s", absoluteFlowSpecificationPath, flow.SpecificationPath)
 	}
 
 	dockerClient := generateDockerClient()

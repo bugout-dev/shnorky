@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"path"
+	"path/filepath"
 	"time"
 )
 
@@ -86,7 +87,18 @@ func GenerateComponentMetadata(id, componentType, componentPath, specificationPa
 // reasonable defaults where possible (e.g. on SpecificationPath).
 // This is the handler for `shnorky components add`
 func AddComponent(db *sql.DB, id, componentType, componentPath, specificationPath string) (ComponentMetadata, error) {
-	metadata, err := GenerateComponentMetadata(id, componentType, componentPath, specificationPath)
+	absoluteComponentPath, err := filepath.Abs(componentPath)
+	if err != nil {
+		return ComponentMetadata{}, err
+	}
+	absoluteSpecificationPath := ""
+	if specificationPath != "" {
+		absoluteSpecificationPath, err = filepath.Abs(specificationPath)
+		if err != nil {
+			return ComponentMetadata{}, err
+		}
+	}
+	metadata, err := GenerateComponentMetadata(id, componentType, absoluteComponentPath, absoluteSpecificationPath)
 	if err != nil {
 		return metadata, err
 	}
