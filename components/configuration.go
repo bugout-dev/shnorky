@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"path/filepath"
 
 	dockerMount "github.com/docker/docker/api/types/mount"
 )
@@ -29,8 +30,14 @@ var ValidMountMethods = map[string]dockerMount.Type{
 // MaterializeMountConfiguration validates the members of its input mount configuration, applies
 // the required substitutions, and returns the resulting values in a new MountConfiguration struct.
 func MaterializeMountConfiguration(rawConfig MountConfiguration) (MountConfiguration, error) {
+	materializedSource := MaterializeEnv(rawConfig.Source)
+	absoluteSource, err := filepath.Abs(materializedSource)
+	if err != nil {
+		return MountConfiguration{}, err
+	}
+
 	materializedConfig := MountConfiguration{
-		Source: MaterializeEnv(rawConfig.Source),
+		Source: absoluteSource,
 		Target: rawConfig.Target,
 		Method: rawConfig.Method,
 	}
