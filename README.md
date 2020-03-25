@@ -24,7 +24,7 @@ command.
 ## Installation
 
 ```
-go get github.com/simiotics/shnorky
+go get github.com/simiotics/shnorky/cmd/shn
 ```
 
 This will put the Shnorky `shn` binary in your `$(go env GOPATH)/bin` directory (most likely at
@@ -97,7 +97,7 @@ touch inputs.txt intermediate.txt outputs.txt
 
 Set the following environment variables (use `set` on Windows):
 ```
-export SHNORKY_TEST_INPUT=inputs.txt SHNORKY_TEST_INTERMEDIATE=intermediate.txt SHNORKY_TEST_OUTPUT=outputs.txt
+export SHNORKY_TEST_INPUT=$(pwd)/inputs.txt SHNORKY_TEST_INTERMEDIATE=$(pwd)/intermediate.txt SHNORKY_TEST_OUTPUT=$(pwd)/outputs.txt
 ```
 
 Then, from the same shell, run the flow:
