@@ -1,6 +1,6 @@
 # shnorky
 
-Shnorky is a workflow orchestrator for data scientists.
+Shnorky is a workflow orchestrator for data scientists. Shnorky allows you to build and manage your data flows.
 
 As a data scientist, you can use Shnorky to string together your notebooks and scripts into a
 complete pipeline from data processing to model training, evaluation, and deployment.
@@ -8,6 +8,17 @@ complete pipeline from data processing to model training, evaluation, and deploy
 Your Shnorky pipelines will run the same way in production as they do on your laptop or workstation.
 This means that you can get your work into production quickly and without any back-and-forths with a
 deployment team.
+
+### Advantages of using Shnorky
+
+- Agency for data scientists: You don’t need DevOps support.
+- Easy to deploy: Write your data flows locally and export them directly into production.
+- Automation: Build  your pipelines much faster with pre-built steps.
+
+### Testimonials from Shnorky users
+
+*"With Shnorky, I was able to easily containerize and deploy my software to the cloud. Every data scientist must have it in their tech stack."
+Art Ponomarev, Senior Data Scientist*
 
 To try it out, follow the instructions below.
 
