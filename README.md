@@ -19,7 +19,7 @@ deployment team.
 
 *"With Shnorky, I was able to easily containerize and deploy my software to the cloud. Every data scientist must have it in their tech stack."*
 
-- Art Ponomarev, Senior Data Scientist
+-- Art Ponomarev, Senior Data Scientist
 
 To try it out, follow the instructions below.
 
